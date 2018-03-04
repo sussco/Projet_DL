@@ -1,4 +1,4 @@
-import Layer
+#import Layer
 import numpy as np
 import math
 
@@ -21,10 +21,10 @@ class Perceptron:
         self.biais = []
         self.weights = []
         for i in range(len(list_of_layers)):
-            self.layers.append(np.random.uniform(0, 0.05, size = list_of_layers[i]))
+            self.layers.append(np.random.uniform(0, 0.01, size = list_of_layers[i]))
         for j in range(len(list_of_layers)-1):
-            self.biais.append(np.random.uniform(0, 0.05, size = list_of_layers[j+1]))
-            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.05)
+            self.biais.append(np.random.uniform(0, 0.01, size = list_of_layers[j+1]))
+            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.01)
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
         self.learningRate = learningRate
@@ -44,12 +44,12 @@ class Perceptron:
     def backPropagation(self, expectedOutput):
         lossPerLayer = []
         lossPerLayer.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
-        for l in range(len(self.layers) - 2, 0, -1):
+        for l in range(len(self.layers) - 2, -1, -1):
             lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
         lossPerLayer.reverse()
-        for l in range(len(lossPerLayer)):
-            self.weightsTable[l] = np.outer(lossPerLayer[l], np.transpose(self.layers[l]))
-            self.biaisTable[l] = lossPerLayer[l]
+        for l in range(len(lossPerLayer) - 1):
+            self.weightsTable[l] = np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] = lossPerLayer[l + 1]
 
 
     def updateParams(self, nbTrainings):
@@ -64,11 +64,11 @@ class Perceptron:
         return error
 
 
-
-
-
-
-
+#
+# test = Perceptron([10,20,10,10],1,0)
+#
+# for l in range(6 - 2, 0 ,-1):
+#     print(l)
 # for i in range(10000):
 #     t = [np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),
 #     np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2)]
