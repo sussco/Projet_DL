@@ -1,4 +1,4 @@
-from perceptron import *
+from Projet_D.PerceptronQuentin.perceptron import *
 
 #An example
 perceptronANDgate = Perceptron(0, 0, 1, 2, 0.05, 0.5, "trigger") #2 inputs excluding BIAS TODO : try changing learning rate and relative importance
@@ -20,7 +20,7 @@ print("\n---------EXAMPLE 1-------")
 perceptronANDgate.forwardPropagation(training_in[0])
 perceptronANDgate.printPerceptron()
 print("\nLearning :")
-perceptronANDgate.learning(training_out[0])
+perceptronANDgate.backpropagation(training_out[0])
 perceptronANDgate.forwardPropagation(training_in[0])
 perceptronANDgate.printPerceptron()
 
@@ -47,7 +47,7 @@ print("\n-----EXAMPLE 4-----")
 perceptronANDgate.forwardPropagation(training_in[3])
 perceptronANDgate.printPerceptron()
 print("\nLearning :")
-perceptronANDgate.learning(training_out[3])
+perceptronANDgate.backpropagation(training_out[3])
 perceptronANDgate.forwardPropagation(training_in[3])
 perceptronANDgate.printPerceptron()
 

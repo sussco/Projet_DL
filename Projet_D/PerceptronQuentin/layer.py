@@ -1,6 +1,7 @@
 from random import uniform
-import numpy as np
-from neuron import *
+
+from Projet_D.PerceptronQuentin.neuron import *
+
 
 class Layer:
 
@@ -21,6 +22,7 @@ class Layer:
         for index in range(nbNeu):
             self.neurons.append(Neuron(self.lindex, index, nbDendritesPerNeu, activationFunction))
         self.state = []
+        self.deltas = []
 
     def initEntryLayer(self):
         #On veut : w(0) = [[1],
@@ -57,6 +59,22 @@ class Layer:
             self.state.append(value)
         return self.state
 
+    def computeOutputDeltas(self):
+        for neuron in self.neurons:
+            self.deltas = neuron.computeOutputDelta()
+        return self.deltas
+
+    def computeHiddenErrors(self, layer_lplus1):
+        for i, neuron in enumerate(self.neurons):
+            self.deltas.append(neuron.computeHiddenDelta(layer_lplus1.deltas))
+        return self.deltas
+
+    def updateW_b(self, learningRate, layerPartialDerivatives):
+        """Partial derivatives must have already been computed"""
+        for n, neuron in enumerate(self.neurons):
+            neuron.udpateW_b(learningRate, layerPartialDerivatives[n])
+
+
     def hadamard(self, l1, l2):
         if len(l1) != len(l2):
             print("Error : wrong Hadamard product")
@@ -75,7 +93,7 @@ class Layer:
 
     def learn(self, desiredOutput):
         for n, neu in enumerate(self.neurons):
-            neu.learn(desiredOutput)
+            neu.updateW_b_old(desiredOutput)
 
     def printLayer(self):
         print("nbD=",self.nbDendritesPerNeu, "nbNeu=", self.nbNeu, "activation=", self.activationFunction)

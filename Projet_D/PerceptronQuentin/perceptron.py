@@ -1,7 +1,6 @@
-from random import uniform
-import math
-import numpy as np
+from neuron import *
 from layer import *
+from numpy import dot
 
 class Perceptron:
     """Neuronal Network, defined by nb of layers, nbEntries, nbHypotheses and n/layer"""
@@ -22,10 +21,16 @@ class Perceptron:
         self.nbInputs = nbInputs
         self.learningRate = learningRate
         self.relativeImportance = relativeImportance
+        self.activationFunction =   activationFunction
         self.nbLayers = nbHiddenLayers + 2
         self.layers = []
+        self.outputs = []
+        self.deltas = []
+        self.costLayerDerivativesW = []
+        self.costLayerDerivativesB = []
 
-        #Entry layer
+
+    #Entry layer
         if nbHiddenLayers <= 0:
             self.layers.append(Layer(0, nbInputs, nbHypotheses, 1, "entry"))
         else:
@@ -65,25 +70,56 @@ class Perceptron:
             currEntry = output
         self.outputState = output #output of the
 
-    def computeErrors(self, outputs, y):
-        #TODO : body
-        deltas = []
-        return deltas
+    def computeDeltas(self):
+        for l, layer in enumerate(list(reversed(self.layers))): #iterating from end
+            if l == len(self.layers)-1: #If it's the output layer, special formula
+                self.deltas.append(layer.computeOutputDeltas()) #computation returns a list of each neuron delta
+            else:
+                self.deltas.append(layer.computeHiddenErrors())
+        return self.deltas #list of lists
+
+    def computePartialDerivatives(self):
+        #grad/Wl(J(W,b,x,y)) = delta(l+1)*al.T
+        for l, layer in enumerate(list(reversed(self.layers.pop(0)))): #for all layers, first expected;
+            costDerivativesWl = []
+            costDerivativesBl = []
+            #for me, Wl is Wl+1 for the ufldl.standford.edu
+            for i, deltail in enumerate(layer.deltas):
+                costDerivativesWlLinei = []
+                costDerivativesBlLinei = []
+                for j, alj in enumerate(self.layers[l-1].state): #for each state of neurons l-1
+                    costDerivativeWij = alj*deltail
+                    costDerivativesWlLinei.append(costDerivativeWij)
+                    costDerivativeBli = deltail
+                    costDerivativesBlLinei.append(costDerivativeBli)
+                costDerivativesWl.append(costDerivativesWlLinei)
+                costDerivativesBl.append(costDerivativesBlLinei)
+            self.costLayerDerivativesW.append(costDerivativesWl)
+            self.costLayerDerivativesB.append(costDerivativesBl)
+
+    def updateW_b(self):
+        for l, layer in enumerate(self.layers):
+            layer.updateW_b_old(self.costLayerDerivativesW[l])
 
 
     def learnExample(self, x, y):
-        outputs = self.forwardPropagation(x) #Matrix of ALL output values
-        deltas = self.computeErrors(outputs, y) #calcul des deltas
-        derivatives = self.computeDerivatives(deltas, outputs)
-        self.updateW_b(derivatives)
+        self.outputs = self.forwardPropagation(x) #Matrix of ALL output values
+        self.backpropagation(y)
 
+    #Obsolete
     def computeDerivatives(self, deltas, outputs):
         #TODO : body
         derivatives = []
         return derivatives
 
-    def learning(self, desiredOutput): #For gate example
-        self.layers[1].learn(desiredOutput)
+    def backpropagation(self, desiredOutput): #For gate example
+        self.computeDeltas() #calcul des deltas
+        self.computePartialDerivatives()
+        self.updateW_b()
+
+    def learnExample(self, input, output):
+        self.forwardPropagation(input)
+        self.backpropagation(output)
 
     def printPerceptron(self):
         for l, layer in enumerate(self.layers):

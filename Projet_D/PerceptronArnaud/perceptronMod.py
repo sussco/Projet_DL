@@ -100,12 +100,12 @@ def gen_dataset(length):
 a = perceptron([2,2,1])
 a.init([1,0])
 a.propagation()
-print '\n'
-print 'valeur des neuronnes au debut:\n', a.layer, '\n'
+print('\n')
+print('valeur des neuronnes au debut:\n', a.layer, '\n')
 
 dataset = gen_dataset(1000)
 for i in range(1000):
     a.init(dataset[0][i])
     a.propagation()
     a.gradient_descent(dataset[1][i], 2)
-    print a.quadratic_error(dataset[1][i])
+    print(a.quadratic_error(dataset[1][i]))
