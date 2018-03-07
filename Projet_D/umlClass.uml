@@ -1,0 +1,57 @@
+@startuml
+class NeuralNetwork{
+}
+NeuralNetwork .. Layer
+
+abstract class Layer{
+String layerType
+int layerSize
+activationFuntion
+{abstract} np.array propagation();
+{abstract} np.array computeError()
+{abstract} np.array backpropagation()
+reLU()
+Sigmoid()
+}
+
+class InputLayer{
+width
+height
+depth
+input
+}
+
+class ConvLayer {
+region
+zeroPadding
+fibers
+filters
+nbfilters
+nbslides
+}
+
+class FullyConnected{
+}
+
+class SoftMax{
+}
+
+abstract class Pool{
+
+}
+
+class MaxPool{
+}
+
+class AvgPool{
+}
+
+
+Layer <|-- FullyConnected
+Layer <|-- Pool
+Layer <|-- InputLayer
+Layer <|-- ConvLayer
+Layer <|-- SoftMax
+Pool <|-- MaxPool
+Pool <|-- AvgPool
+@enduml
