@@ -2,16 +2,24 @@
 import numpy as np
 import math
 
+
+
+def sigmoid(x):
+    return 1 / (1 + math.exp(-x))
+
+def vector_sigmoid(x):
+    for i in range(len(x)):
+        x[i] = sigmoid(x[i])
+    return x
+
+def softmax(x):
+    sum = 0.0
+    for i in range(len(x)):
+        sum += math.exp(x[i])
+    return np.exp(x)/sum
+
+
 class Perceptron:
-
-    def sigmoid(self, x):
-        return 1 / (1 + math.exp(-x))
-
-    def vector_sigmoid(self, x):
-        for i in range(len(x)):
-            x[i] = self.sigmoid(x[i])
-        return x
-
 
 
     def __init__(self, list_of_layers, learningRate, importance):
@@ -37,13 +45,23 @@ class Perceptron:
         assert len(layIn) == len(self.layers[0])
         self.layers[0] = np.array(layIn)
         for i in range(len(self.layers) - 1):
-            self.layers[i + 1] = self.vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
+            self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         return self.layers[-1]
 
 
     def backPropagation(self, expectedOutput):
         lossPerLayer = []
         lossPerLayer.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
+        for l in range(len(self.layers) - 2, -1, -1):
+            lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
+        lossPerLayer.reverse()
+        for l in range(len(lossPerLayer) - 1):
+            self.weightsTable[l] = np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] = lossPerLayer[l + 1]
+
+    def backPropagationCE(self, expectedOutput):
+        lossPerLayer = []
+        lossPerLayer.append(self.layers[-1] - expectedOutput)
         for l in range(len(self.layers) - 2, -1, -1):
             lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
         lossPerLayer.reverse()
@@ -62,6 +80,8 @@ class Perceptron:
         for i in range(len(self.layers[-1])):
             error += (self.layers[-1][i]- expected[i])**2
         return error
+
+
 
 
 #
