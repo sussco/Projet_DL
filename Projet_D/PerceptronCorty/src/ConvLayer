@@ -1,0 +1,6 @@
+
+
+class ConvLayer(Layer):
+
+    def propagation(self):
+        pass
