@@ -5,7 +5,11 @@ import math
 
 
 def sigmoid(x):
-    return 1 / (1 + math.exp(-x))
+    try:
+        ans = 1 / (1 + math.exp(-x))
+    except OverflowError:
+        ans = float('inf')
+    return ans
 
 def vector_sigmoid(x):
     for i in range(len(x)):
@@ -48,6 +52,12 @@ class Perceptron:
             self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         return self.layers[-1]
 
+    def propagationSoftMax(self, layIn):
+        assert len(layIn) == len(self.layers[0])
+        self.layers[0] = np.array(layIn)
+        for i in range(len(self.layers) -2):
+            self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
+        self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
 
     def backPropagation(self, expectedOutput):
         lossPerLayer = []
@@ -61,7 +71,7 @@ class Perceptron:
 
     def backPropagationCE(self, expectedOutput):
         lossPerLayer = []
-        lossPerLayer.append(self.layers[-1] - expectedOutput)
+        lossPerLayer.append(-(expectedOutput - self.layers[-1]))
         for l in range(len(self.layers) - 2, -1, -1):
             lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
         lossPerLayer.reverse()

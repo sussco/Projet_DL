@@ -13,6 +13,12 @@ def vector_sigmoid(x):
         x[i] = sigmoid(x[i])
     return x
 
+def softmax(x):
+    sum = 0.0
+    for i in range(len(x)):
+        sum += math.exp(x[i])
+    return np.exp(x)/sum
+
 
 class perceptron:
 
@@ -29,6 +35,11 @@ class perceptron:
     def propagation(self):
         for i in range(len(self.layer)-1):
             self.layer[i+1] = vector_sigmoid(np.matmul(self.weights[i], self.layer[i]) + self.bias[i])
+
+    def propagationCE(self):
+        for i in range(len(self.layer)-2):
+            self.layer[i+1] = vector_sigmoid(np.matmul(self.weights[i], self.layer[i]) + self.bias[i])
+        self.layer[-1] = softmax(np.matmul(self.weights[-2], self.layer[-2]) + self.bias[-2])
 
     def init(self,input_object):
         assert len(input_object) == len(self.layer[0])
