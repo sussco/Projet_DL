@@ -1,0 +1,4 @@
+success rate : success rate : F0.2
+.
+for parameters :
+   layers : 784, 800, 10,     learningRate: 0 
