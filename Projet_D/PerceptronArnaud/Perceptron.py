@@ -19,8 +19,22 @@ def vector_sigmoid(x):
 def softmax(x):
     sum = 0.0
     for i in range(len(x)):
-        sum += math.exp(x[i])
+        try:
+            sum += math.exp(x[i])
+        except OverflowError:
+            sum += float('inf')
     return np.exp(x)/sum
+
+def reLU(x):
+    if(x>0):
+        return x
+    else:
+        return 0.01*x
+
+def vector_reLU(x):
+    for i in range(len(x)):
+        x[i] = reLU(x[i])
+    return x
 
 
 class Perceptron:
@@ -33,10 +47,10 @@ class Perceptron:
         self.biais = []
         self.weights = []
         for i in range(len(list_of_layers)):
-            self.layers.append(np.random.uniform(0, 0.01, size = list_of_layers[i]))
+            self.layers.append(np.random.uniform(0, 0.05, size = list_of_layers[i]))
         for j in range(len(list_of_layers)-1):
-            self.biais.append(np.random.uniform(0, 0.01, size = list_of_layers[j+1]))
-            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.01)
+            self.biais.append(np.random.uniform(0, 0.05, size = list_of_layers[j+1]))
+            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.05)
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
         self.learningRate = learningRate
@@ -66,8 +80,8 @@ class Perceptron:
             lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
         lossPerLayer.reverse()
         for l in range(len(lossPerLayer) - 1):
-            self.weightsTable[l] = np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
-            self.biaisTable[l] = lossPerLayer[l + 1]
+            self.weightsTable[l] += np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += lossPerLayer[l + 1]
 
     def backPropagationCE(self, expectedOutput):
         lossPerLayer = []
@@ -76,43 +90,19 @@ class Perceptron:
             lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
         lossPerLayer.reverse()
         for l in range(len(lossPerLayer) - 1):
-            self.weightsTable[l] = np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
-            self.biaisTable[l] = lossPerLayer[l + 1]
+            self.weightsTable[l] += np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += lossPerLayer[l + 1]
 
 
     def updateParams(self, nbTrainings):
         for l in range(len(self.layers) - 1):
             self.weights[l] -= self.learningRate * ( 1/float(nbTrainings) * self.weightsTable[l])
+            self.weightsTable[l] = 0
             self.biais[l] -= self.learningRate * ( 1/float(nbTrainings) * self.biaisTable[l])
+            self.biaisTable[l] = 0
 
     def quadratic_error(self, expected):
         error = 0
         for i in range(len(self.layers[-1])):
             error += (self.layers[-1][i]- expected[i])**2
         return error
-
-
-
-
-#
-# test = Perceptron([10,20,10,10],1,0)
-#
-# for l in range(6 - 2, 0 ,-1):
-#     print(l)
-# for i in range(10000):
-#     t = [np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),
-#     np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2),np.random.randint(0,2)]
-#     print(t)
-#     print(test.propagation(t))
-#     test.backPropagation([ (1-t[i]) for i in range(10)])
-#     test.updateParams(1)
-
-# print('\n')
-# print(test.propagation([1,1,1,1]))
-# print(test.propagation([0,0,1,1]))
-# print(test.propagation([1,1,0,0]))
-# print(test.propagation([0,1,0,1]))
-# print(test.propagation([0,0,0,0]))
-# print(test.propagation([0,1,1,0]))
-# print(test.propagation([1,0,0,1]))
-# print(test.propagation([1,0,1,1]))

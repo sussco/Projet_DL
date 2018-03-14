@@ -37,7 +37,7 @@ def list_labelled_images(image_file, label_file, nbr, number_offset, mode):
     for i in range(nbr):
         lines_im = list(image.read(784))
         for j in range(len(lines_im)):
-            lines_im[j] = ord(lines_im[j])/float(255)
+            lines_im[j] = lines_im[j]/float(255)
         image_list.append(lines_im)
         if(mode == 'letters'):
             label_list.append(np.zeros(26))
@@ -47,7 +47,7 @@ def list_labelled_images(image_file, label_file, nbr, number_offset, mode):
             label_list.append(np.zeros(10))
             a = ord(label.read(1))
             label_list[-1][a] = 1
-        print i/(float(nbr))
+        print (i/(float(nbr)))
     return (image_list, label_list)
 
 
