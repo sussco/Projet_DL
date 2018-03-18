@@ -3,7 +3,10 @@ from Projet_D.CNN.convlayer import ConvLayer, ConvLayer2D
 
 
 if __name__ == "__main__":
-    ntest = "3d"
+    #ntest = "2d 3x 5x5"
+    #ntest = "3d"
+    #ntest = "3dnull"
+    ntest = "2dback"
     if ntest == "2d3x3":
         conv = ConvLayer2D(3, 3)
         conv.feedforward(np.array([[[1, 1 ,1],
@@ -64,5 +67,27 @@ if __name__ == "__main__":
                                       [2.21, 2.22, 2.23, 2.24],
                                       [2.31, 2.32, 2.33, 2.34],
                                       [2.41, 2.42, 2.43, 2.44]]]))
-        conv3d
+    elif ntest == "3dnull":
+        conv3d = ConvLayer(2, [4, 4, 3])
         conv3d.propagation(np.zeros((3, 4, 4)))
+
+    elif ntest == "2dback":
+        conv2D = ConvLayer2D(3, 3)
+        print(conv2D)
+        conv2D.feedforward(np.array([[[0.11, 0.12, 0.13, 0.14],
+                                      [0.21, 0.22, 0.23, 0.24],
+                                      [0.31, 0.32, 0.33, 0.34],
+                                      [0.41, 0.42, 0.43, 0.44]],
+
+                                     [[1.11, 1.12, 1.13, 1.14],
+                                      [1.21, 1.22, 1.23, 1.24],
+                                      [1.31, 1.32, 1.33, 1.34],
+                                      [1.41, 1.42, 1.43, 1.44]],
+
+                                     [[2.11, 2.12, 2.13, 2.14],
+                                      [2.21, 2.22, 2.23, 2.24],
+                                      [2.31, 2.32, 2.33, 2.34],
+                                      [2.41, 2.42, 2.43, 2.44]]]), 4, 4, 3)
+        conv2D.feedback(np.array([[0.11, 0.12, 0.13],
+                                  [0.21, 0.22, 0.23],
+                                  [0.31, 0.32, 0.33]]))

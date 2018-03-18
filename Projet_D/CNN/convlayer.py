@@ -40,12 +40,10 @@ class ConvLayer(Layer):
 
                                   [ [ . , . ]
                                     [ . , . ] ] ] , ndmin=3"""
-        for layer2d in self.convFilters:
+        for layer2d in self.convFilters: #For each filter
             self.layerState.append(layer2d.feedforward(previousLayer, self.inputSizeXYZ[0], self.inputSizeXYZ[1], self.inputSizeXYZ[0]))
         print("\nConv3D state :", self.layerState)
         return self.layerState
-        #TODO: heeeeeeeeeeeeeeeeeere: works ?
-
 
 
     def computeError(self):
@@ -123,6 +121,7 @@ class ConvLayer2D(Layer):
         print("Previous layer to compute : ",prevLayer)
 
         #Creating patches for convolution
+        #self.patches[channel, line, row]
         #self.patches = np.array( [ [ array([ [0.  , 0.  , 0.  ],
         #                                     [0.  , 0.11, 0.12],
         #                                     [0.  , 0.21, 0.22] ]),
@@ -153,7 +152,7 @@ class ConvLayer2D(Layer):
                 neuron = 0
                 for c in range(nbChannels):
                     print("\nPatch token on channel={0} on {1} : {2}".format(c, nbChannels, np.array(channelPatches[c][4*l+n]).flatten()))
-                    print("for this channel, weights=", np.array(self.filterWeights[c]), len(np.array(self.filterWeights[c])))
+                    print("for this channel, b={0} & weights={1}".format(self.filterBias, np.array(self.filterWeights[c])))
 
                     neuron += np.dot(np.array(channelPatches[c][4*l+n]).flatten(), np.array(self.filterWeights[c]).flatten()) #TODO: adjust indice '4*' with param size
                     print("neuron=", neuron)
@@ -176,26 +175,32 @@ class ConvLayer2D(Layer):
         :return: dX, gradient of the cost of
         """
         try:
-            dH.shape()
+            dH.shape
         except AttributeError as mess:
             print("FEEDBACK ERROR : Seems that partial derivative of layer l+1 is not given as a np.array : {0}".format(mess))
 
-        if dH.shape() != self.layerState.shape():
+        if dH.shape != self.layerState.shape:
             print("FEEDBACK ERROR : dH has dim {0} instead of layer shape = {1}".format(dH.shape, self.layerState.shape))
             exit()
 
-        #Computing derivatives : for each neuron, dWij = scalar(patchX, dH)
-        for ij in len(self.layerState.flatten()):
-            dWij = 0
-            for c in self.entryD: #Don't forget to sum on all channels
-                dWij += np.dot(dH.flatten(), np.array(self.patches[c][ij]).flatten())
-                #TODO: check
-            print("dWij = {0}".format(dWij))
+        #Computing derivatives : for each neuron, dWij = scalar(patchX, dH) (???)
+        print("filter weights :",self.filterWeights)
+        for c, channelFilter in enumerate(self.filterWeights): #For each weight (all pixels of all channel), we need to "convolute the error"
+            for ij in range(len(channelFilter)):
+                dWij = 0
+                for p in self.patches: #depth is important (cause a filter is applied to all channels)
+                    print("+={0} . {1}".format(dH.flatten(), self.patches[c][ij].flatten()))
+                    dWij += np.dot(dH.flatten(), self.patches[c][ij].flatten())
+                    #Update parameter
+                print("dWij = {0}".format(dWij))
+                #TODO: the bias ?!
+
+        #Updating parameters
 
 
     def layer2d2col(self, layer2d, layW, layH, regionSize=3): #TODO:extend zeropadding, stride
         """
-        Works for 3x3 patches
+        Transforms the image in series of patches to be multiplied by the weights. Works for 3x3 patches only, at the moment
         :param layer2d: must be a np.array((xsize, ysize)) in 1 dimension (1 channel)
         :param layWidth:
         :param height:
