@@ -11,10 +11,10 @@ test_images = inmageTest.list_labelled_images('t10k-images-idx3-ubyte', 't10k-la
 mean_list = []
 nb = 800
 lay = [784,nb,10]
-learningR = 0.12
-batch = 1
-fRes= open("results22","ab")
-for o in range(14):
+learningR = 0.9
+batch = 100
+fRes= open("results24","ab")
+for o in range(15):
     mean_list.append(lay)
     mean_list.append(learningR)
     mean_list.append(batch)
@@ -41,6 +41,6 @@ for o in range(14):
         print (percep.layers[-1])
         print (test_images[1][j])
     mean_list.append(count_test/float(j+1))
-    learningR += 0.02
+    learningR += 0.1
 print (mean_list)
 pickle.dump(mean_list,fRes)

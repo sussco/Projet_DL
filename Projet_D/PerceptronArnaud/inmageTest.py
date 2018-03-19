@@ -15,7 +15,7 @@ def read_img(in_file, offset):
 def convert_matrix(in_file, offset):
     img = read_img(in_file, offset)
     for i in range(len(img)):
-        img[i] = ord(img[i])
+        img[i] = img[i]
     arr = np.array(img)
     arr.resize(28,28)
     return arr
