@@ -6,7 +6,6 @@ import scipy
 import matplotlib.image as img
 from copy import deepcopy
 
-
 def conv(image, filterIm, zeroPad, stride):
     # on calcule la taille de li'mage de sortie
     # depend de zeroPad et de stride
@@ -15,7 +14,7 @@ def conv(image, filterIm, zeroPad, stride):
     # initialisation de la matrice de sortie
     output = np.zeros( (int(x),int(y)) )
     # on copie l'image a traiter, elle va etre modifiee
-    imageCp = deepimageCpy(image)
+    imageCp = deepcopy(image)
     # ajout de zeros autour de l'image depend de l'entier zeroPad
     for k in range(zeroPad):
         imageCp = np.insert(imageCp, imageCp.shape[0], 0, axis = 0)
@@ -42,7 +41,7 @@ convo = conv(imageBlue, filt, 1,1)
 fig = plt.figure(figsize=(image.shape[0],image.shape[1]))
 
 fig.add_subplot(2,2,1)
-plt.imshow(imageRed)
+plt.imshow(image)
 fig.add_subplot(2,2,2)
 plt.imshow(convo)
 plt.show()
