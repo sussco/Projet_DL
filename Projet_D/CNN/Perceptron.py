@@ -3,14 +3,43 @@ import math
 #import layer.py
 
 
-class Perceptron:
-    def sigmoid(self, x):
-        return 1 / (1 + math.exp(-x))
 
-    def vector_sigmoid(self, x):
-        for i in range(len(x)):
-            x[i] = self.sigmoid(x[i])
+def sigmoid(x):
+    try:
+        ans = 1 / (1 + math.exp(-x))
+    except OverflowError:
+        ans = float('inf')
+    return ans
+
+def vector_sigmoid(x):
+    for i in range(len(x)):
+        x[i] = sigmoid(x[i])
+    return x
+
+def softmax(x):
+    sum = 0.0
+    for i in range(len(x)):
+        try:
+            sum += math.exp(x[i])
+        except OverflowError:
+            sum += float('inf')
+    return np.exp(x)/sum
+
+def reLU(x):
+    if(x>0):
         return x
+    else:
+        return 0.01*x
+
+def vector_reLU(x):
+    for i in range(len(x)):
+        x[i] = reLU(x[i])
+    return x
+
+
+
+class Perceptron:
+
 
     """Entrees ici"""
 
