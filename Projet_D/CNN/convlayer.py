@@ -108,8 +108,9 @@ class ConvLayer2D(Layer):
         #Initialisation of weights and bias
         self.filterWeights = np.random.uniform(0, 0.05, size = (filterSize, filterSize, entryD)) #Shared weights
         self.filterBias = np.random.uniform(0, 0.05, size = (self.layW, self.layH, entryD))
-
-
+        #Initialisation des matrices d'erreurs TODO: utile pour la backprop
+        self.filterWeightsTable = np.zeros(size = (filterSize, filterSize, entryD))
+        self.filterBiasTable = np.zeros(size = (self.layW, self.layH, entryD))
         # Dimensions de l'image d'entree
         self.entryH = entryH
         self.entryW = entryW
