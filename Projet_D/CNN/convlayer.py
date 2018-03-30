@@ -109,8 +109,8 @@ class ConvLayer2D(Layer):
         self.filterWeights = np.random.uniform(0, 0.05, size = (filterSize, filterSize, entryD)) #Shared weights
         self.filterBias = np.random.uniform(0, 0.05, size = (self.layW, self.layH, entryD))
         #Initialisation des matrices d'erreurs TODO: utile pour la backprop
-        self.filterWeightsTable = np.zeros(size = (filterSize, filterSize, entryD))
-        self.filterBiasTable = np.zeros(size = (self.layW, self.layH, entryD))
+        self.filterWeightsTable = np.zeros(shape = (filterSize, filterSize, entryD))
+        self.filterBiasTable = np.zeros(shape = (self.layW, self.layH, entryD))
         # Dimensions de l'image d'entree
         self.entryH = entryH
         self.entryW = entryW
@@ -145,7 +145,7 @@ class ConvLayer2D(Layer):
                     self.layerState[i,j, channel] =(np.multiply(
                     imageCp[i: i+len(self.filterWeights[0]),
                     j: j+len(self.filterWeights[1]), channel]
-                    , self.filterWeights[channel])).sum()
+                    , np.rot90(self.filterWeights[channel], 2))).sum() # rot180 pour faire une convolution et pas un correlation 
                     #+ self.filterBias[self.layW,self.layH,channel])
 
 
