@@ -108,9 +108,11 @@ class ConvLayer2D(Layer):
         #Initialisation of weights and bias
         self.filterWeights = np.random.uniform(0, 0.05, size = (filterSize, filterSize, entryD)) #Shared weights
         self.filterBias = np.random.uniform(0, 0.05, size = (self.layW, self.layH, entryD))
-        #Initialisation des matrices d'erreurs TODO: utile pour la backprop
+        #Initialisation des matrices d'erreurs
         self.filterWeightsTable = np.zeros(shape = (filterSize, filterSize, entryD))
         self.filterBiasTable = np.zeros(shape = (self.layW, self.layH, entryD))
+        # initialisation de la table des deltas
+        self.imageTable = np.zeros(shape = (entryW, entryH, entryD))
         # Dimensions de l'image d'entree
         self.entryH = entryH
         self.entryW = entryW
@@ -119,6 +121,7 @@ class ConvLayer2D(Layer):
 
         self.zeroPad = zeroPad
         self.stride = stride
+
 
         print("Weights init values : w=",self.filterWeights)
 
@@ -144,20 +147,25 @@ class ConvLayer2D(Layer):
                     #print( "i: ", i, "j: ", j)
                     self.layerState[i,j, channel] =(np.multiply(
                     imageCp[i: i+len(self.filterWeights[0]),
-                    j: j+len(self.filterWeights[1]), channel]
-                    , np.rot90(self.filterWeights[channel], 2))).sum() # rot180 pour faire une convolution et pas un correlation 
+                    j: j+len(self.filterWeights[1]),
+                    channel],
+                    np.rot90(self.filterWeights[channel], 4))).sum() # rot180 pour faire une convolution et pas un correlation
                     #+ self.filterBias[self.layW,self.layH,channel])
 
 
 
-    def feedback(self, dH):
+    def computeImageTable(self, nextLayer, prevLayer):
         """
         Learning step.
         :param dH: tab of derivatives of the next layer (supposed that a convolution is never the last layer block)
         :return: dX, gradient of the cost of
         """
+
+        dH = nextLayer.imageTable
+        dW = nextLayer.weightsTable
+
         try:
-            dH.shape()
+            dW.shape()
         except AttributeError as mess:
             print("FEEDBACK ERROR : Seems that partial derivative of layer l+1 is not given as a np.array : {0}".format(mess))
 
@@ -165,15 +173,32 @@ class ConvLayer2D(Layer):
             print("FEEDBACK ERROR : dH has dim {0} instead of layer shape = {1}".format(dH.shape, self.layerState.shape))
             exit()
 
+
         #Computing derivatives : for each neuron, dWij = scalar(patchX, dH)
-        for ij in len(self.layerState.flatten()):
-            dWij = 0
-            for c in self.entryD: #Don't forget to sum on all channels
-                dWij += np.dot(dH.flatten(), np.array(self.patches[c][ij]).flatten())
-                #TODO: check
-            print("dWij = {0}".format(dWij))
+        for channel in range(dH.shape[2]):
+            for i in range(dH.shape[0]):
+                for j in range(dH.shape[1]):
+
+                    self.imageTable[i,j,channel] =  np.multiply(
+                    dH[i: i+len(self.filterWeights[0]),
+                    j: j+len(self.filterWeights[0]),
+                    channel],
+                    nextLayer.filterWeights[channel]
+                    ) * sigmoid(prevLayer[i,j,channel])
 
 
+    def computeWeightsTable(self, prevLayer):
+
+        if prevLayer.shape() != self.imageTable.shape():
+            print("FEEDBACK ERROR : dH has dim {0} instead of layer shape = {1}".format(dH.shape, self.layerState.shape))
+            exit()
+
+        for channel in range(prevLayer.shape[2]):
+            for m in range(self.filterWeightsTable.shape[0]):
+                for n in range(self.filterWeightsTable.shape[1]):
+                    for i in range(imageTable.shape[0]):
+                        for j in range(imageTable.shape[1]):
+                            self.filterWeightsTable[m,n,channel] += self.imageTable[i,j,channel]*prevLayer[i+m, j+n, channel]
 
 # Petit test
 a = ConvLayer2D(entryW = 1200, entryH = 800)
