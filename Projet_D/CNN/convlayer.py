@@ -1,4 +1,3 @@
-from layer import *
 import numpy as np
 from random import uniform
 import matplotlib.image as img
@@ -24,6 +23,8 @@ class ConvLayer(Layer):
         :param inputSizeXYZ: [w, h, d] of the input layer (or image)
         :param zeroPaddingXY: [paddingX, paddingY]
         """
+        Layer.__init__()
+
         self.strideXY = strideXY
         self.nbfilters = nbfilters
 
@@ -47,10 +48,10 @@ class ConvLayer(Layer):
 
     def propagation(self, previousLayer):
         """For a 2x2x2, outputs a numpy.array( [ [  [ . , . ],
-                                    [ . , . ] ]
+                                                    [ . , . ] ]
 
-                                  [ [ . , . ]
-                                    [ . , . ] ] ] , ndmin=3"""
+                                                  [ [ . , . ]
+                                                    [ . , . ] ] ] , ndmin=3"""
         for layer2d in self.convFilters:
             self.layerState.append(layer2d.feedforward(previousLayer, self.inputSizeXYZ[0], self.inputSizeXYZ[1], self.inputSizeXYZ[0]))
         print("\nConv3D state :", self.layerState)

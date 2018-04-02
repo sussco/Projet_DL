@@ -6,10 +6,15 @@ class Layer:
     number of entries,
     """
 
-    def __init__(self, nbEntries, nbNeurones):
+    def __init__(self, nbEntries, nbNeurones, precLayer=None, nextLayer=None):
         self.weights = np.random.normal(0, 0.01, [nbNeurones,nbEntries])
         self.biais = np.random.normal(0,0.01,nbNeurones)
-        self.a = np.zeros(nbNeurones)
+
+        self.activation = np.zeros(nbNeurones)
+        self.deltas = np.zeros(nbNeurones)
+
+        self.precLayer = precLayer
+        self.nextLayer = nextLayer
 
 
 
@@ -24,7 +29,8 @@ class Layer:
 
     def reLU(self):
         print("ReLU fct undefined")
-        pass
 
     def sigmoid(self):
         print("sigmoid Undefined")
+
+    def get
