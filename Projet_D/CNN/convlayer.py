@@ -122,7 +122,7 @@ class ConvLayer2D(Layer):
         self.zeroPad = zeroPad
         self.stride = stride
 
-        self.modEntry
+        self.modEntry = np.zeros( shape = (self.layW +2*self.zeroPad, self.layH +2*self.zeroPad, entryD) )
 
         print("Weights init values : w=",self.filterWeights)
 
