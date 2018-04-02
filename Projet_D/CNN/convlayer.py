@@ -112,7 +112,7 @@ class ConvLayer2D(Layer):
         self.filterWeightsTable = np.zeros(shape = (filterSize, filterSize, entryD))
         self.filterBiasTable = np.zeros(shape = (self.layW, self.layH, entryD))
         # initialisation de la table des deltas
-        self.imageTable = np.zeros(shape = (entryW, entryH, entryD))
+        self.imageTable = np.zeros(shape = (self.layW, self.layH, entryD))
         # Dimensions de l'image d'entree
         self.entryH = entryH
         self.entryW = entryW
@@ -122,6 +122,7 @@ class ConvLayer2D(Layer):
         self.zeroPad = zeroPad
         self.stride = stride
 
+        self.modEntry
 
         print("Weights init values : w=",self.filterWeights)
 
@@ -140,6 +141,7 @@ class ConvLayer2D(Layer):
             imageCp = np.insert(imageCp,0,0, axis = 1)
             imageCp = np.insert(imageCp,0,0, axis = 0)
         # calcul de la sortie
+        self.modEntry = imageCp
 
         for channel in  range(prevLayer.shape[2]):
             for i in range(0, imageCp.shape[0]-2*self.zeroPad, self.stride):
@@ -156,11 +158,9 @@ class ConvLayer2D(Layer):
 
     def computeImageTable(self, nextLayer, prevLayer):
         """
-        Learning step.
-        :param dH: tab of derivatives of the next layer (supposed that a convolution is never the last layer block)
-        :return: dX, gradient of the cost of
+        imageTable : table des erreurs des activations
+        weightsTable : table des erreurs des poids
         """
-
         dH = nextLayer.imageTable
         dW = nextLayer.weightsTable
 
@@ -187,18 +187,30 @@ class ConvLayer2D(Layer):
                     ) * sigmoid(prevLayer[i,j,channel])
 
 
+
+
+
     def computeWeightsTable(self, prevLayer):
 
         if prevLayer.shape() != self.imageTable.shape():
             print("FEEDBACK ERROR : dH has dim {0} instead of layer shape = {1}".format(dH.shape, self.layerState.shape))
             exit()
 
-        for channel in range(prevLayer.shape[2]):
+        """for channel in range(prevLayer.shape[2]):
             for m in range(self.filterWeightsTable.shape[0]):
                 for n in range(self.filterWeightsTable.shape[1]):
                     for i in range(imageTable.shape[0]):
                         for j in range(imageTable.shape[1]):
                             self.filterWeightsTable[m,n,channel] += self.imageTable[i,j,channel]*prevLayer[i+m, j+n, channel]
+                            """
+        # ca c'est mieux, à voir si ca marche
+        for channel in range(prevLayer.shape[2]):
+            for m in range(self.filterWeightsTable.shape[0]):
+                for n in range(self.filterWeightsTable.shape[1]):
+                    self.filterWeightsTable[m,n,channel] += np.multiply(
+                    self.imageTable[channel], self.modEntry[m: m+layW, n: n+layH, channel]
+                    )
+
 
 # Petit test
 a = ConvLayer2D(entryW = 1200, entryH = 800)
