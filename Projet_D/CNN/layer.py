@@ -2,7 +2,7 @@ import numpy as np
 
 class Layer:
 
-    """ This lass defines a specific layer, we can change the 
+    """ This lass defines a specific layer, we can change the
     number of entries,
     """
 
@@ -12,8 +12,6 @@ class Layer:
         self.a = np.zeros(nbNeurones)
 
 
-    def print(self):
-        print(self.weights)
 
     def propagation(self):
         print("Method undefined in subclass of Layer")

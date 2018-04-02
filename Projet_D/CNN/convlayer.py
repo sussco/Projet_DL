@@ -1,6 +1,17 @@
 from layer import *
 import numpy as np
 from random import uniform
+import matplotlib.image as img
+from copy import deepcopy
+import math
+import matplotlib.pyplot as plt
+
+def sigmoid(x):
+    try:
+        ans = 1 / (1 + math.exp(-x))
+    except OverflowError:
+        ans = float('inf')
+    return ans
 
 class ConvLayer(Layer):
 
@@ -73,101 +84,71 @@ class ConvLayer(Layer):
 
 
     """
-        CIFAR-10 format : 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images. 
-        
+        CIFAR-10 format : 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images.
+
         data -- a 10000x3072 numpy array of uint8s. Each row of the array stores a 32x32 colour image. The first 1024 entries contain the red channel values, the next 1024 the green, and the final 1024 the blue. The image is stored in row-major order, so that the first 32 entries of the array are the red channel values of the first row of the image.
         labels -- a list of 10000 numbers in the range 0-9. The number at index i indicates the label of the ith image in the array data.
-  
+
     """
 
 
 
 class ConvLayer2D(Layer):
 
-    def __init__(self, layW, layH, entryH=4, entryW=4, entryD=3, stride=1): #For 1 channel = for 1 dim im
-        #Change default values for entry
-        self.filterWeights = np.zeros((entryD, 3*3)) #Shared weights. TODO : calcultate layH & layW = fct(F,S,P..)
-        self.layerState = np.zeros((layH, layW)) #TODO: calcultate layH & layW = fct(F,S,P..)
-        self.patches = []
+    def __init__(self, entryW=4, entryH=4, entryD=3, filterSize = 3, stride=1, zeroPad=1): #For 1 channel = for 1 dim im
 
+        # Calcul des dimensions de la sortie
+        # depend de zeroPad et de stride
+        self.layW = int((entryW-filterSize+2*zeroPad)/stride +1)
+        self.layH = int((entryH-filterSize+2*zeroPad)/stride +1)
+
+        # initialisation de la matrice de sortie
+        self.layerState = np.zeros( (self.layH, self.layW, entryD) )
+
+        #Initialisation of weights and bias
+        self.filterWeights = np.random.uniform(0, 0.05, size = (filterSize, filterSize, entryD)) #Shared weights
+        self.filterBias = np.random.uniform(0, 0.05, size = (self.layW, self.layH, entryD))
+        #Initialisation des matrices d'erreurs TODO: utile pour la backprop
+        self.filterWeightsTable = np.zeros(shape = (filterSize, filterSize, entryD))
+        self.filterBiasTable = np.zeros(shape = (self.layW, self.layH, entryD))
+        # Dimensions de l'image d'entree
         self.entryH = entryH
         self.entryW = entryW
         self.entryD = entryD
 
-        self.layW = layW
-        self.layH = layH
 
-        #init weights & bias randomly
-        #                     |Row            |Line
-        # filterWaights = [ [w00, w01, .. , w0x, w10, .. , wyx], .....   [w00, w01, .. , w0n, w10, .. , wyx]  ]
-        for channelWeightsTab in self.filterWeights:
-            for i in range(len(np.array(channelWeightsTab).flatten())):
-                channelWeightsTab[i] = uniform(0, 0.01) #TODO: Good value ? -> tests
+        self.zeroPad = zeroPad
+        self.stride = stride
+
         print("Weights init values : w=",self.filterWeights)
-        self.filterBias = uniform(0, 0.01)
 
-    def feedforward(self, prevLayer, prevLayW, prevLayH, prevLayD=3):
-        """
 
-        :param prevLayer: format  np.array[ [1, 1 ,1],
-                                            [1, 1, 1],
-                                            [1, 1, 1]
 
-                                            [1, 1 ,1],
-                                            [1, 1, 1],
-                                            [1, 1, 1] ], ..)
-        :return: self.layer = np.array( [ [ ., ., . ],
-                                          [ ., ., . ],
-                                          [ ., ., . ] ] )
-        """
-        print("Previous layer to compute : ",prevLayer)
 
-        #Creating patches for convolution
-        #self.patches = np.array( [ [ array([ [0.  , 0.  , 0.  ],
-        #                                     [0.  , 0.11, 0.12],
-        #                                     [0.  , 0.21, 0.22] ]),
-        #
-        #                             array([ [0.  , 0.  , 0.  ],
-        #                                     [0.11, 0.12, 0.13],
-        #                                     [0.21, 0.22, 0.23]])  ], .... all for ch.1
-        #                             array([ [ ., ., . ],
-        #                                     [ ., ., . ], ..... ch2 ...
-        self.patches = []
-        for layerSlide in prevLayer: #for each channel..
-            self.patches.append(self.layer2d2col(layerSlide, prevLayW, prevLayH)) #make patches
+    def feedforward(self, prevLayer):
+        #assert(prevLayer.shape = ())
 
-        #print("Patches :", self.patches)
+        # on copie l'image a traiter, elle va etre modifiee
+        imageCp = deepcopy(prevLayer)
+        # ajout de zeros autour de l'image depend de l'entier zeroPad
+        for k in range(self.zeroPad):
+            imageCp = np.insert(imageCp, imageCp.shape[0], 0, axis = 0)
+            imageCp = np.insert(imageCp, imageCp.shape[1], 0, axis = 1)
+            imageCp = np.insert(imageCp,0,0, axis = 1)
+            imageCp = np.insert(imageCp,0,0, axis = 0)
+        # calcul de la sortie
 
-        channelPatches = []
-        nbChannels = len(self.patches)
-        for c in range(nbChannels): #separate patches by slides of previous layer
-            channelPatches.append(self.patches[c])
-            #print("Channel c=", c, patches[c])
+        for channel in  range(prevLayer.shape[2]):
+            for i in range(0, imageCp.shape[0]-2*self.zeroPad, self.stride):
+                for j in range(0, imageCp.shape[1]-2*self.zeroPad, self.stride):
+                    #print( "i: ", i, "j: ", j)
+                    self.layerState[i,j, channel] =(np.multiply(
+                    imageCp[i: i+len(self.filterWeights[0]),
+                    j: j+len(self.filterWeights[1]), channel]
+                    , np.rot90(self.filterWeights[channel], 2))).sum() # rot180 pour faire une convolution et pas un correlation 
+                    #+ self.filterBias[self.layW,self.layH,channel])
 
-        print("Channel patches:", channelPatches)
-        print("channelPatches[c][n]=", channelPatches[0][4])
 
-        #Computing layer state
-        for l, line in enumerate(self.layerState):
-            for n, neuron in enumerate(line):
-                neuron = 0
-                for c in range(nbChannels):
-                    print("\nPatch token on channel={0} on {1} : {2}".format(c, nbChannels, np.array(channelPatches[c][4*l+n]).flatten()))
-                    print("for this channel, weights=", np.array(self.filterWeights[c]), len(np.array(self.filterWeights[c])))
-
-                    neuron += np.dot(np.array(channelPatches[c][4*l+n]).flatten(), np.array(self.filterWeights[c]).flatten()) #TODO: adjust indice '4*' with param size
-                    print("neuron=", neuron)
-                neuron += self.filterBias
-                print("Before value neuron=", neuron)
-                neuron = ConvLayer.activationFunction(neuron)
-                print("Final value neuron=", neuron)
-                self.layerState[l][n] = neuron
-
-            #print(self.patches)
-            #for patch in self.patches:
-            #    print(patch)
-        print("Layer state:", self.layerState)
-        return self.layerState
 
     def feedback(self, dH):
         """
@@ -193,131 +174,23 @@ class ConvLayer2D(Layer):
             print("dWij = {0}".format(dWij))
 
 
-    def layer2d2col(self, layer2d, layW, layH, regionSize=3): #TODO:extend zeropadding, stride
-        """
-        Works for 3x3 patches
-        :param layer2d: must be a np.array((xsize, ysize)) in 1 dimension (1 channel)
-        :param layWidth:
-        :param height:
-        :param regionSize: size of the patch thats convolves
-        :return: patches (np.array((width, size))
-        """
-        transforming = True
-        patches = []
-        x,y = 0, 0
-        while transforming :
-            currPatch = np.zeros((regionSize, regionSize))
-            #print("x={0} y={1} layW={2} layH={3}".format(x, y, layW, layH))
 
-            if y == 0 and x == 0: ##First row
-                # 0 0 0
-                # 0 . .
-                # 0 . .
-                #Zero-padding of first line, ok
-                #zero-padding of (1,0), ok
-                #Catching "pixels"
-                currPatch[1][1] = layer2d[0][0]
-                currPatch[1][2] = layer2d[0][1]
+# Petit test
+a = ConvLayer2D(entryW = 1200, entryH = 800)
+# Matrice de detection de contour par exemple
+a.filterWeights = [[[-1,0,1],[-2,0,2],[-1,0,1]],
+[[-1,0,1],[-2,0,2],[-1,0,1]],
+[[-1,0,1],[-2,0,2],[-1,0,1]]]
+image = img.imread('castle.jpg')
+a.feedforward(image)
+fig = plt.figure(figsize=(image.shape[0],image.shape[1]))
 
-                currPatch[2][1] = layer2d[1][0]
-                currPatch[2][2] = layer2d[1][1]
-                x+=1
-            elif y==0 and (0 < x and x < layW-1):
-                # 0 0 0
-                # . . .
-                # . . .
-                currPatch[1][0] = layer2d[y][x-1]
-                currPatch[1][1] = layer2d[y][x]
-                currPatch[1][2] = layer2d[y][x+1]
-                currPatch[2][0] = layer2d[y+1][x-1]
-                currPatch[2][1] = layer2d[y+1][x]
-                currPatch[2][2] = layer2d[y+1][x+1]
-                x+=1
-            elif y == 0 and x == layW-1:
-                # 0 0 0
-                # . . 0
-                # . . 0
-                #Zero-padding of first line, ok
-                #zero-padding of (1, layW-1), ok
-                #Catching "pixels"
-                currPatch[1][0] = layer2d[y][x-1]
-                currPatch[1][1] = layer2d[y][x]
-
-                currPatch[2][0] = layer2d[y+1][x-1]
-                currPatch[2][1] = layer2d[y+1][x]
-                y+=1
-                x = 0
-            elif (0 < y and y < layH-1) and x == 0:
-                # 0 .  .
-                # 0 0y .
-                # 0 .  .
-                currPatch[0][1] = layer2d[y-1][x]
-                currPatch[0][2] = layer2d[y-1][x+1]
-                currPatch[1][1] = layer2d[y][x]
-                currPatch[1][2] = layer2d[y][x+1]
-                currPatch[2][1] = layer2d[y+1][x]
-                currPatch[2][2] = layer2d[y+1][x+1]
-                x+=1
-            elif (0 < y and y < layH-1) and x == layW-1:
-                # . .  0
-                # . 0y 0
-                # . .  0
-                currPatch[0][0] = layer2d[y-1][layW-2]
-                currPatch[0][1] = layer2d[y-1][layW-1]
-                currPatch[1][0] = layer2d[y][layW-2]
-                currPatch[1][1] = layer2d[y][layW-1]
-                currPatch[2][0] = layer2d[y+1][layW-2]
-                currPatch[2][1] = layer2d[y+1][layW-1]
-                y+=1
-                x = 0
-            elif y == layH-1 and x == 0:
-                # 0 . .
-                # 0 . .
-                # 0 0 0
-                currPatch[0][1] = layer2d[y-1][0]
-                currPatch[0][2] = layer2d[y-1][1]
-
-                currPatch[1][1] = layer2d[y][0]
-                currPatch[1][2] = layer2d[y][1]
-                x+=1
-            elif y==layH-1 and (0 < x and x < layW-1):
-                # . . .
-                # . . .
-                # 0 0 0
-                currPatch[0][0] = layer2d[y-1][x-1]
-                currPatch[0][1] = layer2d[y-1][x]
-                currPatch[0][2] = layer2d[y-1][x+1]
-                currPatch[1][0] = layer2d[y][x-1]
-                currPatch[1][1] = layer2d[y][x]
-                currPatch[1][2] = layer2d[y][x+1]
-                x+=1
-            elif y == layH-1 and x == layW-1:
-                # . . 0
-                # . . 0
-                # 0 0 0
-                currPatch[0][0] = layer2d[y-1][x-1]
-                currPatch[0][1] = layer2d[y-1][x]
-
-                currPatch[1][0] = layer2d[y][x-1]
-                currPatch[1][1] = layer2d[y][x]
-                transforming = False #finished convoluting
-            elif 0 < y and y < layH-1 and 0 < x and x < layW-1:
-                # . .  .
-                # . xy .
-                # . .  .
-                currPatch[0][0] = layer2d[y-1][x-1]
-                currPatch[0][1] = layer2d[y-1][x]
-                currPatch[0][2] = layer2d[y-1][x+1]
-                currPatch[1][0] = layer2d[y][x-1]
-                currPatch[1][1] = layer2d[y][x]
-                currPatch[1][2] = layer2d[y][x+1]
-                currPatch[2][0] = layer2d[y+1][x-1]
-                currPatch[2][1] = layer2d[y+1][x]
-                currPatch[2][2] = layer2d[y+1][x+1]
-                x+=1
-            else:
-                print("Problem in convolution : x={0} y={1}".format(x, y))
-                print(patches)
-                exit()
-            patches.append(currPatch)
-        return patches
+fig.add_subplot(2,2,1)
+plt.imshow(image)
+fig.add_subplot(2,2,2)
+plt.imshow(a.layerState[::,::,0])
+fig.add_subplot(2,2,3)
+plt.imshow(a.layerState[::,::,1])
+fig.add_subplot(2,2,4)
+plt.imshow(a.layerState[::,::,2])
+plt.show()
