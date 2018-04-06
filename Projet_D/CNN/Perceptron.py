@@ -1,6 +1,6 @@
+#import Layer
 import numpy as np
 import math
-#import layer.py
 
 
 
@@ -37,150 +37,72 @@ def vector_reLU(x):
     return x
 
 
-
 class Perceptron:
 
 
-    """Entrees ici"""
-
-    """ Couche de sortie """
-
-    """ Couche cachee / intermediaires """
-
-    """ Initialisation d'un perceptron"""
-    """ La premiere couche correspont a la premiere couche cache qui prend l'entree
-        en parametre
-        les autres sauf la derniere sont des couches cachees"""
-
-    def __init__(self, nbHiddenLayers, nbNeuPerLayer, nbOutPuts, nbInputs, learningRate, importance):
+    def __init__(self, list_of_layers, learningRate, importance):
+        self.weightsTable = []
+        self.biaisTable = []
+        self.layers = []
+        self.biais = []
+        self.weights = []
+        for i in range(len(list_of_layers)):
+            self.layers.append(np.random.uniform(0, 0.05, size = list_of_layers[i]))
+        for j in range(len(list_of_layers)-1):
+            self.biais.append(np.random.uniform(0, 0.05, size = list_of_layers[j+1]))
+            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.05)
+            self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
+            self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
         self.learningRate = learningRate
         self.importance = importance
-        """ couches cachees """
-        self.layers = []
-        """ Premiere couche """
-        self.layers.append(Layer(nbInputs, nbNeuPerLayer))
-        for i in range(0, nbHiddenLayers - 1):
-            self.layers.append(Layer(nbNeuPerLayer, nbNeuPerLayer))
-        """ Derniere couche (visible)"""
-        self.layers.append(Layer(nbNeuPerLayer, nbOutPuts))
 
-    """ Propagation """
+
+
 
     def propagation(self, layIn):
-        self.layers[0].a = self.vector_sigmoid(np.matmul(self.layers[0].weights, layIn)
-                                               + self.layers[0].biais)
-        for i in range(1, len(self.layers)):
-            self.layers[i].a = self.vector_sigmoid(
-                np.matmul(self.layers[i].weights, self.layers[i - 1].a) + self.layers[i].biais)
-        return self.layers[-1].a
+        assert len(layIn) == len(self.layers[0])
+        self.layers[0] = np.array(layIn)
+        for i in range(len(self.layers) - 1):
+            self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
+        return self.layers[-1]
 
-    def fPrime(self, layer):
-        f = np.zeros(len(self.layers[layer].a))
-        for i in range(0, len(self.layers[layer].a)):
-            f[i] = (self.layers[layer].a[i] * (1 - self.layers[layer].a[i]))
-        return f
+    def propagationSoftMax(self, layIn):
+        assert len(layIn) == len(self.layers[0])
+        self.layers[0] = np.array(layIn)
+        for i in range(len(self.layers) -2):
+            self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
+        self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
 
-    def outPutError(self, expectedOutPut):
-        return (-(expectedOutPut - self.layers[-1].a) * self.fPrime(len(self.layers) - 1))
+    def backPropagation(self, expectedOutput):
+        lossPerLayer = []
+        lossPerLayer.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
+        for l in range(len(self.layers) - 2, -1, -1):
+            lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
+        lossPerLayer.reverse()
+        for l in range(len(lossPerLayer) - 1):
+            self.weightsTable[l] += np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += lossPerLayer[l + 1]
 
-    def partialDerivate(self, layer, outPutErr):
-        if (layer == len(self.layers) - 1):
-            return outPutErr
-        else:
-            return np.matmul(np.transpose(self.layers[layer + 1].weights), self.partialDerivate(layer + 1, outPutErr
-                                                                                                )) * self.fPrime(layer)
-
-    def layerError(self, layer, outPutErr, layIn):
-        delta = self.partialDerivate(layer, outPutErr)
-        if (layer == 0):
-            actCouchePrec = np.transpose(layIn)
-        else:
-            actCouchePrec = np.transpose(self.layers[layer - 1].a)
-        return [np.outer(delta, actCouchePrec), delta]
-
-    """ Retropropagation """
-
-    def backpropagation(self, layIn, expectedOutPut, nbTrainings, weightsTable, biaisTable):
-        """ On va utiliser costs et mettre a jour les poids dedans, puis a partir
-        de cost on va mettre a jour les poids dansperception
-        """
-
-        error = self.outPutError(expectedOutPut)
-        for l in range(0, len(self.layers)):
-            """ On calcule les deux erreur de biais et de poids en meme temps"""
-            coupleError = self.layerError(l, error, layIn)
-            weightsTable[l] += coupleError[0]
-            biaisTable[l] += coupleError[1]
-
-    def updateParams(self, weightsTable, biaisTable, nbTrainings):
-        """update parameters"""
-        for l in range(0, len(self.layers)):
-            self.layers[l].weights -= self.learningRate * ((1 / nbTrainings) * weightsTable[l]
-                                                           + self.importance)
-            self.layers[l].biais -= self.learningRate * ((1 / nbTrainings) * biaisTable[l])
-            print("test")
+    def backPropagationCE(self, expectedOutput):
+        lossPerLayer = []
+        lossPerLayer.append(-(expectedOutput - self.layers[-1]))
+        for l in range(len(self.layers) - 2, -1, -1):
+            lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
+        lossPerLayer.reverse()
+        for l in range(len(lossPerLayer) - 1):
+            self.weightsTable[l] += np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += lossPerLayer[l + 1]
 
 
-test = Perceptron(0, 3, 10, 10, 100, 0)
-exp = [0 for i in range(10)]
-exp[0] = 1
-print(exp)
-weightsTable = []
-biaisTable = []
-for lay in test.layers:
-    weightsTable.append(np.zeros([len(lay.weights), len(lay.weights[0])]))
-    biaisTable.append(np.zeros([len(lay.weights)]))
+    def updateParams(self, nbTrainings):
+        for l in range(len(self.layers) - 1):
+            self.weights[l] -= self.learningRate * ( 1/float(nbTrainings) * self.weightsTable[l])
+            self.weightsTable[l] = 0
+            self.biais[l] -= self.learningRate * ( 1/float(nbTrainings) * self.biaisTable[l])
+            self.biaisTable[l] = 0
 
-exp[0] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[1] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[2] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[3] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[4] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[5] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[6] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[7] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[8] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-exp = [0 for i in range(10)]
-exp[9] = 1
-test.propagation(exp)
-test.backpropagation(exp, exp, 10, weightsTable, biaisTable)
-test.updateParams(weightsTable, biaisTable, 10)
-
-# for lay in test.layers:
-#    print("ligne : ", len(lay.weights), "colonne : ",len(lay.weights[0]),
-#          "sorties : ",len(lay.a))
-# print(np.matmul(np.transpose(test.layers[2].weights),test.partialDerivate(2,exp)))
-test.propagation([1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-# print(test.layers[0].weights)
-print(test.layers[-1].a)
-print()
-# print(weightsTable)
-print(test.layerError(1, test.outPutError(exp), exp)[0])
-# print(test.lOut)
-# print test.loss_last_layer(exp)
+    def quadratic_error(self, expected):
+        error = 0
+        for i in range(len(self.layers[-1])):
+            error += (self.layers[-1][i]- expected[i])**2
+        return error

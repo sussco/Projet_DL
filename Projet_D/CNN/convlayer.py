@@ -12,56 +12,40 @@ def sigmoid(x):
         ans = float('inf')
     return ans
 
-class ConvLayer(Layer):
+class ConvLayer():
 
-    def __init__(self, nbfilters, inputSizeXYZ, zeroPaddingXY=1, strideXY=1, regionSizeXY=[3,3]):
-        """
+    def __init__(self, nbfilters, entryW=4, entryH=4, entryD=3, filterSize = 3, stride=1, zeroPad=1):
 
-        :param stride: stride for convolution, typically 1 or 2
-        :param nbfilters:
-        :param regionSizeXY: region to be filtered by ONE neuron
-        :param inputSizeXYZ: [w, h, d] of the input layer (or image)
-        :param zeroPaddingXY: [paddingX, paddingY]
-        """
-        Layer.__init__()
+        # Dimensions de l'image d'entree
+        self.entryH = entryH
+        self.entryW = entryW
+        self.entryD = entryD
 
-        self.strideXY = strideXY
-        self.nbfilters = nbfilters
+        #Zeropadding : nombre de couches de zeros autour de l'image
+        self.zeroPad = zeroPad
+        #Pas de la convolution
+        self.stride = stride
 
-        self.regionSizeXY = regionSizeXY #Square, rectangle, size of the region filtered by a neuron
+        self.layW = int((entryW-filterSize+2*zeroPad)/stride +1)
+        self.layH = int((entryH-filterSize+2*zeroPad)/stride +1)
 
-        #X = width, Y = height, Z = depth
-        self.inputSizeXYZ = inputSizeXYZ
-        self.sizeXYZ = np.zeros((inputSizeXYZ[2], inputSizeXYZ[0], inputSizeXYZ[1]))
-
-        inputSizeXY = np.array([inputSizeXYZ[0], inputSizeXYZ[1]]) #size in dim 2
-        self.zeroPaddingXY = zeroPaddingXY
-        #self.sizeXY = (inputSizeXYZ - regionSizeXY + 2*strideXY)/zeroPaddingXY + 1 #TODO: param for padding..
 
         #Stack of ConvLayer2D
         self.layD = inputSizeXYZ
-        self.convFilters = []
+        self.conv2Dlayers = []
         for l in range(nbfilters):
-            self.convFilters.append(ConvLayer2D(inputSizeXYZ[0], inputSizeXYZ[1]))
-        self.layerState = [] # tab of tab of tab (3D)
+            self.conv2Dlayers.append(ConvLayer2D(entryW, entryH, entryD, filterSize, stride, zeroPad))
+
 
 
     def propagation(self, previousLayer):
-        """For a 2x2x2, outputs a numpy.array( [ [  [ . , . ],
-                                                    [ . , . ] ]
 
-                                                  [ [ . , . ]
-                                                    [ . , . ] ] ] , ndmin=3"""
-        for layer2d in self.convFilters:
-            self.layerState.append(layer2d.feedforward(previousLayer, self.inputSizeXYZ[0], self.inputSizeXYZ[1], self.inputSizeXYZ[0]))
-        print("\nConv3D state :", self.layerState)
-        return self.layerState
-        #TODO: heeeeeeeeeeeeeeeeeere: works ?
+        for layer2d in self.conv2Dlayers:
+            layer2d.feedforward()
 
 
 
-    def computeError(self):
-        pass
+
 
     def feedback(self, dH):
         def feedback(self, dH):
@@ -79,9 +63,18 @@ class ConvLayer(Layer):
             pass
 
 
-    def activationFunction(x):
-        #TODO: others than sigmoid ?
-        return 1/(1+np.exp(-x))
+
+    def computeDeltaTable(self, nextLayers, prevLayers):
+        for i in range(len(self.conv2Dlayers)):
+            self.conv2Dlayers[i].computeDeltaTable(nextLayers[i], prevLayers[i])
+
+    def computeWeightsTable(self, prevLayers, deltaTables):
+        for i in range(len(self.conv2Dlayers)):
+            self.conv2Dlayers[i].computeWeightsTable(prevLayers[i], deltaTables[i])
+
+    def updateParams(self, nbTrainings):
+        for layer2D in self.conv2Dlayers:
+            layer2D.updateParams(nbTrainings)
 
 
     """
@@ -94,7 +87,7 @@ class ConvLayer(Layer):
 
 
 
-class ConvLayer2D(Layer):
+class ConvLayer2D():
 
     def __init__(self, entryW=4, entryH=4, entryD=3, filterSize = 3, stride=1, zeroPad=1): #For 1 channel = for 1 dim im
 
@@ -104,14 +97,14 @@ class ConvLayer2D(Layer):
         self.layH = int((entryH-filterSize+2*zeroPad)/stride +1)
 
         # initialisation de la matrice de sortie
-        self.layerState = np.zeros( (self.layH, self.layW, entryD) )
+        self.activationTable = np.zeros( (self.layH, self.layW, entryD) )
 
         #Initialisation of weights and bias
         self.filterWeights = np.random.uniform(0, 0.05, size = (filterSize, filterSize, entryD)) #Shared weights
-        self.filterBias = np.random.uniform(0, 0.05, size = (self.layW, self.layH, entryD))
+        self.filterBias = np.random.uniform(0, 0.05, size = (self.layH, self.layW, entryD))
         #Initialisation des matrices d'erreurs
         self.filterWeightsTable = np.zeros(shape = (filterSize, filterSize, entryD))
-        self.filterBiasTable = np.zeros(shape = (self.layW, self.layH, entryD))
+        self.filterBiasTable = np.zeros(shape = (self.layH, self.layW, entryD))
         # initialisation de la table des deltas
         self.deltaTable = np.zeros(shape = (self.layW, self.layH, entryD))
         # Dimensions de l'image d'entree
@@ -151,8 +144,8 @@ class ConvLayer2D(Layer):
             for i in range(0, imageCp.shape[0]-2*self.zeroPad, self.stride):
                 # j : colonnes
                 for j in range(0, imageCp.shape[1]-2*self.zeroPad, self.stride):
-                    # on calcule la sortie (self.layerState)
-                    self.layerState[i,j, channel] =sigmoid((np.multiply(
+                    # on calcule la sortie (self.activationTable)
+                    self.activationTable[i,j, channel] =sigmoid((np.multiply(
                     # le morceau de l'image a convoluer
                     imageCp[i: i+len(self.filterWeights[0]),
                     j: j+len(self.filterWeights[1]),
@@ -160,25 +153,20 @@ class ConvLayer2D(Layer):
                     # le filtre
                         np.rot90(self.filterWeights[channel], 4))).sum() # rot180 pour faire une convolution et pas un correlation
                     # le biais
-                    + self.filterBias[self.layW,self.layH,channel])
+                    + self.filterBias[i,j,channel])
 
 
 
     def computeDeltaTable(self, nextLayer, prevLayer):
 
-        #deltaTable : table des erreurs des activations (deltas)
+        #deltaTable : table des erreurs des activationTables (deltas)
         #weightsTable : table des erreurs des poids
 
         dH = nextLayer.deltaTable
-        dW = nextLayer.weightsTable
 
-        try:
-            dW.shape()
-        except AttributeError as mess:
-            print("FEEDBACK ERROR : Seems that partial derivative of layer l+1 is not given as a np.array : {0}".format(mess))
 
-        if dH.shape() != self.layerState.shape():
-            print("FEEDBACK ERROR : dH has dim {0} instead of layer shape = {1}".format(dH.shape, self.layerState.shape))
+        if dH.shape() != self.activationTable.shape():
+            print("FEEDBACK ERROR : dH has dim {0} instead of layer shape = {1}".format(dH.shape, self.activationTable.shape))
             exit()
         #Pour chaque couleur
         for channel in range(dH.shape[2]):
@@ -199,10 +187,10 @@ class ConvLayer2D(Layer):
 
 
 
-    def computeWeightsTable(self, prevLayer):
+    def computeWeightsTable(self, prevLayer, deltaTable):
 
-        if prevLayer.shape() != self.deltaTable.shape():
-            print("FEEDBACK ERROR : dH has dim {0} instead of layer shape = {1}".format(dH.shape, self.layerState.shape))
+        if self.activationTable.shape() != deltaTable.shape():
+            print("FEEDBACK ERROR : dH has dim {0} instead of layer shape = {1}".format(dH.shape, self.activationTable.shape))
             exit()
 
         """for channel in range(prevLayer.shape[2]):
@@ -218,8 +206,37 @@ class ConvLayer2D(Layer):
                 for n in range(self.filterWeightsTable.shape[1]):
 
                     self.filterWeightsTable[m,n,channel] += np.multiply(
-                    self.deltaTable[channel], self.modEntry[m: m+layW, n: n+layH, channel]
+                    deltaTable[channel], self.modEntry[m: m+layW, n: n+layH, channel]
                     )
+
+    def computeWeightsTableFC(self, prevLayer, deltaTableFC):
+
+        assert(self.activationTable.shape()[0]*
+        self.activationTable.shape()[1]*
+        self.activationTable.shape()[2] != len(deltaTableFC))
+        tableCp = deepcopy(deltaTableFC)
+
+        tableCp = np.reshape(tableCp, self.activationTable.shape)
+        # ca c'est mieux, verifier les indices
+        for channel in range(prevLayer.shape[2]):
+            for m in range(self.filterWeightsTable.shape[0]):
+                for n in range(self.filterWeightsTable.shape[1]):
+
+                    self.filterWeightsTable[m,n,channel] += np.multiply(
+                    tableCp[channel], self.modEntry[m: m+layW, n: n+layH, channel]
+                    )
+
+
+
+
+
+
+    def updateParams(self, nbTrainings):
+        for channel in range(filterWeightsTable.shape[2]):
+                    self.filterWeights[channel] -= self.learningRate * ( 1/float(nbTrainings) * self.filterWeightsTable[channel])
+                    self.filterWeightsTable[channel] = 0
+                    self.filterBias[channel] -= self.learningRate * ( 1/float(nbTrainings) * self.filterBiasTable[channel])
+                    self.filterBiasTable[channel] = 0
 
 
 # Petit test
@@ -235,9 +252,9 @@ fig = plt.figure(figsize=(image.shape[0],image.shape[1]))
 fig.add_subplot(2,2,1)
 plt.imshow(image)
 fig.add_subplot(2,2,2)
-plt.imshow(a.layerState[::,::,0])
+plt.imshow(a.activationTable[::,::,0])
 fig.add_subplot(2,2,3)
-plt.imshow(a.layerState[::,::,1])
+plt.imshow(a.activationTable[::,::,1])
 fig.add_subplot(2,2,4)
-plt.imshow(a.layerState[::,::,2])
+plt.imshow(a.activationTable[::,::,2])
 plt.show()
