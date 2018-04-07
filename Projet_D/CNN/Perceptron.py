@@ -46,11 +46,13 @@ class Perceptron:
         self.layers = []
         self.biais = []
         self.weights = []
+        self.lossPerLayer = []
+
         for i in range(len(list_of_layers)):
-            self.layers.append(np.random.uniform(0, 0.05, size = list_of_layers[i]))
+            self.layers.append(np.random.uniform(0, 0.01, size = list_of_layers[i]))
         for j in range(len(list_of_layers)-1):
-            self.biais.append(np.random.uniform(0, 0.05, size = list_of_layers[j+1]))
-            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.05)
+            self.biais.append(np.random.uniform(0, 0.01, size = list_of_layers[j+1]))
+            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.01)
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
         self.learningRate = learningRate
@@ -74,24 +76,25 @@ class Perceptron:
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
 
     def backPropagation(self, expectedOutput):
-        lossPerLayer = []
-        lossPerLayer.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
+        self.lossPerLayer = []
+        self.lossPerLayer.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
         for l in range(len(self.layers) - 2, -1, -1):
-            lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
-        lossPerLayer.reverse()
-        for l in range(len(lossPerLayer) - 1):
-            self.weightsTable[l] += np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
-            self.biaisTable[l] += lossPerLayer[l + 1]
+            self.lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),self.lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
+        self.lossPerLayer.reverse()
+        for l in range(len(self.lossPerLayer) - 1):
+            self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += self.lossPerLayer[l + 1]
 
     def backPropagationCE(self, expectedOutput):
-        lossPerLayer = []
-        lossPerLayer.append(-(expectedOutput - self.layers[-1]))
+        self.lossPerLayer = []
+        self.lossPerLayer.append(-(expectedOutput - self.layers[-1]))
         for l in range(len(self.layers) - 2, -1, -1):
-            lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
-        lossPerLayer.reverse()
-        for l in range(len(lossPerLayer) - 1):
-            self.weightsTable[l] += np.outer(lossPerLayer[l + 1], np.transpose(self.layers[l]))
-            self.biaisTable[l] += lossPerLayer[l + 1]
+            a = np.matmul(np.transpose(self.weights[l]),self.lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l]))
+            self.lossPerLayer.append(a)
+        self.lossPerLayer.reverse()
+        for l in range(len(self.lossPerLayer) - 1):
+            self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += self.lossPerLayer[l + 1]
 
 
     def updateParams(self, nbTrainings):
