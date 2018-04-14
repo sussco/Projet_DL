@@ -8,7 +8,7 @@ from convlayer import ConvLayer2D
 from  Perceptron import Perceptron
 import imageReader
 
-labelled_images = imageReader.list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 15000, 0, 'digits')
+labelled_images = imageReader.list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 60000, 0, 'digits')
 test_images = imageReader.list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 10000, 0, 'digits')
 
 conv = ConvLayer2D(28,28,1,3,1,1, 0.7)
@@ -16,7 +16,7 @@ fc = Perceptron([784,500,10], 0.7, 1)
 batch  = 10
 count = 0
 #conv.filterWeights = np.array([[[0],[0],[0]],[[0],[1],[0]],[[0],[0],[0]]])
-for i in range(int(15000/int(batch))):
+for i in range(int(60000/int(batch))):
         #print percep.layer[1], '\n \n'
         for k in range(batch):
             conv.feedforward(labelled_images[0][batch*i+k])
