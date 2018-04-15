@@ -73,6 +73,29 @@ def list_labelled_images2D(image_file, label_file, nbr, number_offset, mode):
         print (i/(float(nbr)))
     return (image_list, label_list)
 
+def list_labelled_images2Dnew(image_file, label_file, nbr, number_offset, mode):
+    image_list = []
+    label_list = []
+    image = open(image_file, "rb")
+    label = open(label_file, "rb")
+    image.seek(16 + 784*number_offset)
+    label.seek(8+number_offset)
+    for i in range(nbr):
+        lines_im = np.array(list(image.read(784)))
+        lines_im = lines_im/float(255)
+        lines_im = np.reshape(lines_im, (1,1,28,28))
+        image_list.append(lines_im)
+        if(mode == 'letters'):
+            label_list.append(np.zeros(26))
+            a = ord(label.read(1))
+            label_list[-1][a-1] = 1
+        if(mode == 'digits'):
+            label_list.append(np.zeros(10))
+            a = ord(label.read(1))
+            label_list[-1][a] = 1
+        print (i/(float(nbr)))
+    return (image_list, label_list)
+
 
 def print_grey(in_file, offset):
     arr = convert_matrix(in_file, offset)

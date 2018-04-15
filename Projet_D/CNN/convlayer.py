@@ -149,7 +149,7 @@ class ConvLayer2D():
                     j: j+len(self.filterWeights[1]),
                     channel],
                     # le filtre
-                        np.rot90(self.filterWeights[::, ::, channel], 4))).sum()) # rot180 pour faire une convolution et pas un correlation
+                    np.rot90(self.filterWeights[::, ::, channel], 4))).sum()) # rot180 pour faire une convolution et pas un correlation
                     # le biais
                     #+ self.filterBias[i,j,channel])
 

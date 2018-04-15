@@ -62,6 +62,7 @@ class Perceptron:
 
 
     def propagation(self, layIn):
+        np.array(layIn).flatten()
         assert len(layIn) == len(self.layers[0])
         self.layers[0] = np.array(layIn)
         for i in range(len(self.layers) - 1):
