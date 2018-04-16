@@ -45,7 +45,7 @@ class ConvLayer():
             self.biasTable.append(np.random.uniform(0, 0.05, size = (entryD, self.layH, self.layW)))
             self.filterErrors.append( np.zeros(shape = (entryD, filterSize, filterSize)))
             self.biasErrors.append( np.zeros(shape = (entryD, self.layH, self.layW)))
-            self.deltaTable.append( np.zeros(shape = (entryD, self.layW, self.layH)))
+            self.deltaTable.append( np.zeros(shape = (entryD, self.entryH, self.entryW)))
             self.activationTable.append( np.zeros( (entryD, self.layH, self.layW) ))
         self.modEntry = np.zeros( shape = (entryD, self.layW +2*self.zeroPad, self.layH +2*self.zeroPad) )
 
@@ -69,44 +69,53 @@ class ConvLayer():
         #imageCp = np.reshape(imageCp, (self.entryD, self.layW+2*self.zeroPad, self.layH+2*self.zeroPad))
         self.modEntry = imageCp
         # pour chaque couleur
-        for filter in range(self.nbFilters):
+        for filters in range(self.nbFilters):
             for filterPrev in range(prevLayer.shape[0]):
                 for channel in  range(prevLayer.shape[1]):
                     # i: lignes
-                    for i in range(0, imageCp.shape[2]-2*self.zeroPad, self.stride):
+                    for i in range(0, imageCp.shape[2]-2*self.zeroPad-2, self.stride):
                         # j : colonnes
-                        for j in range(0, imageCp.shape[3]-2*self.zeroPad, self.stride):
+                        for j in range(0, imageCp.shape[3]-2*self.zeroPad-2, self.stride):
                             # on calcule la sortie (self.activationTable)
-                            self.activationTable[filter+filterPrev][channel, i,j] =sigmoid((np.multiply(
+                            self.activationTable[filters+filterPrev][channel, i,j] =sigmoid((np.multiply(
                             # le morceau de l'image a convoluer
                             imageCp[filterPrev, channel,i: i+self.filterSize,
                             j: j+self.filterSize],
                             # le filtre
-                            np.rot90(self.filterTable[filter][channel], 2))).sum()) # rot180 pour faire une convolution et pas un correlation
+                            np.rot90(self.filterTable[filters][channel], 4))).sum()) # rot180 pour faire une convolution et pas un correlation
                             # le biais
                             #+ self.filterBias[i,j,channel])
 
 
 
-    def computeDeltaTable(self, nextDeltaTable):
-        nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, 1, 28,28))
+    def computeDeltaTable(self, nextDeltaTable, prevlayer):
+        nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, 1, self.layW,self.layH))
+        deltaTableMod = deepcopy(nextDeltaTable)
+
+        for k in range(self.filterSize-1):
+            deltaTableMod = np.insert(deltaTableMod, deltaTableMod.shape[2], 0, axis = 2)
+            deltaTableMod = np.insert(deltaTableMod, deltaTableMod.shape[3], 0, axis = 3)
+            deltaTableMod = np.insert(deltaTableMod,0,0, axis = 2)
+            deltaTableMod = np.insert(deltaTableMod,0,0, axis = 3)
+
         #deltaTable : table des erreurs des activationTables (deltas)
         #weightsTable : table des erreurs des poids
         for filter in range(self.nbFilters):
+            # print("deltatable mod: ", np.array(deltaTableMod).shape)
+            # print("prevLayer: ", np.array(prevlayer).shape)
+            # print("input size : ", self.entryH, self.entryW)
+            # print("self delta: ", np.array(self.deltaTable).shape)
             #Pour chaque couleur
-
-            for channel in range(np.array(self.activationTable).shape[1]):
-                for i in range(0, np.array(self.activationTable).shape[2]-2*self.zeroPad):
-                    for j in range(0, np.array(self.activationTable).shape[3]-2*self.zeroPad):
-                        #print(i,j)
+            for channel in range(self.entryD):
+                for i in range(self.entryH):
+                    for j in range(self.entryW):
                         #Calcul de self.deltaTable
                         self.deltaTable[filter][channel, i,j] =  np.multiply(
                         # la deltaTable de la couche suivante
-                        nextDeltaTable[filter,channel,i: i+self.filterSize,
-                        j: j+self.filterSize],
+                        deltaTableMod[filter,channel,i: i+self.filterSize,j: j+self.filterSize],
                         np.rot90(self.filterTable[filter][channel], 2)
                         # derivee de la sigmoide
-                        ).sum() * self.activationTable[filter][channel, i, j]*(1-self.activationTable[filter][channel, i, j])
+                        ).sum() * prevlayer[filter][channel, i, j]*(1-prevlayer[filter][channel, i, j])
 
 
 
@@ -115,13 +124,15 @@ class ConvLayer():
     def computeWeightsTable(self, prevLayer, deltaTable):
 
             for filter in range(self.nbFilters):
+                # print("mod: ", self.modEntry.shape)
+                # print("prev: ", np.array(prevLayer).shape)
                 # ca c'est mieux, verifier les indices
                 for channel in range(np.array(prevLayer).shape[1]):
                     for m in range(self.filterErrors[filter].shape[1]):
                         for n in range(self.filterErrors[filter].shape[2]):
                             self.filterErrors[filter][channel, m, n] += np.multiply(
-                            np.rot90(deltaTable[filter,channel],2),
-                            self.modEntry[channel, m: m+self.layW, n: n+self.layH]
+                            np.rot90(deltaTable[filter,channel],4),
+                            self.modEntry[filter, channel, m: m+self.layW, n: n+self.layH]
                             ).sum()
 
 
