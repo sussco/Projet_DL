@@ -47,7 +47,7 @@ def list_labelled_images(image_file, label_file, nbr, number_offset, mode):
             label_list.append(np.zeros(10))
             a = ord(label.read(1))
             label_list[-1][a] = 1
-        print (i/(float(nbr)))
+        #print (i/(float(nbr)))
     return (image_list, label_list)
 
 def list_labelled_images2D(image_file, label_file, nbr, number_offset, mode):
@@ -70,7 +70,7 @@ def list_labelled_images2D(image_file, label_file, nbr, number_offset, mode):
             label_list.append(np.zeros(10))
             a = ord(label.read(1))
             label_list[-1][a] = 1
-        print (i/(float(nbr)))
+        #print (i/(float(nbr)))
     return (image_list, label_list)
 
 def list_labelled_images2Dnew(image_file, label_file, nbr, number_offset, mode):
@@ -93,7 +93,7 @@ def list_labelled_images2Dnew(image_file, label_file, nbr, number_offset, mode):
             label_list.append(np.zeros(10))
             a = ord(label.read(1))
             label_list[-1][a] = 1
-        print (i/(float(nbr)))
+        #print (i/(float(nbr)))
     return (image_list, label_list)
 
 

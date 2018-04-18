@@ -12,16 +12,17 @@ import imageReader
 labelled_images = imageReader.list_labelled_images2Dnew('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 15000, 0, 'digits')
 test_images = imageReader.list_labelled_images2Dnew('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 5000, 0, 'digits')
 
-nbfilters = 1
-conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, 0.5)
-fc = Perceptron([26*26*nbfilters,800,10], 0.5, 0.5)
-batch  = 10
+nbfilters = 6
+conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, 0.2)
+fc = Perceptron([26*26*nbfilters,800,10], 0.2, 0.2)
+batch  = 1
 count = 0
+a = deepcopy(conv1.filterTable)
+
 #conv.filterWeights = np.array([[[0],[0],[0]],[[0],[1],[0]],[[0],[0],[0]]])
-for i in range(int(10000/int(batch))):
+for i in range(int(15000/int(batch))):
         #print percep.layer[1], '\n \n'
         for k in range(batch):
-            activationList = []
             conv1.propagation(labelled_images[0][batch*i+k])
 
 
@@ -29,9 +30,10 @@ for i in range(int(10000/int(batch))):
             fcInput = np.array(conv1.activationTable).flatten()
             fc.propagationSoftMax(fcInput)
             fc.backPropagationCE(labelled_images[1][batch*i+k])
-            deltaTable = np.reshape(fc.lossPerLayer[0], (1, conv1.entryD, conv1.layW, conv1.layH))
+            # print(len(fc.lossPerLayer[0]))
+            deltaTable = np.reshape(fc.lossPerLayer[0], (6, conv1.entryD, conv1.layW, conv1.layH))
             conv1.computeWeightsTable(labelled_images[0][batch*i+k], deltaTable)
-
+            #print(fc.layers[-1])
         #print(conv.filterWeights)
         #print(conv.filterWeightsTable)
         fc.updateParams(batch)
@@ -41,11 +43,22 @@ for i in range(int(10000/int(batch))):
             count +=1
 
 count_test = 0
-for j in range(5000):
-    activationListTest = []
+for j in range(5):
     conv1.propagation(test_images[0][j])
     fcInput = np.array(conv1.activationTable).flatten()
     fc.propagationSoftMax(fcInput)
+    #print("ENTREE: ", np.reshape(np.array(fc.layers[0]), (26,26))[15])
     if (np.argmax(fc.layers[-1]) == np.argmax(test_images[1][j])):
         count_test +=1
     print(count_test/float(j+1))
+    print(np.argmax(test_images[1][j]))
+    print(np.argmax(fc.layers[-1]))
+for lk in range(nbfilters):
+    print(conv1.filterTable[lk].shape)
+    plt.matshow(np.reshape(conv1.filterTable[lk], (3,3)) ,cmap=plt.cm.gray)
+
+
+print("BEGINNING: ", a)
+print("END: ", conv1.filterTable)
+print(conv1.biasTable)
+plt.show()
