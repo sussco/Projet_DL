@@ -34,14 +34,14 @@ class ConvLayer():
 
         self.activationTable = []
         self.filterTable = []
-        self.biasTable = np.random.uniform(-0.05, 0.05)
+        self.biasTable = np.random.uniform(0, 0.05)
         self.filterErrors = []
         self.biasErrors = 0
         self.deltaTable = []
 
 
         for i in range(nbFilters):
-            self.filterTable.append(np.random.uniform(-0.05, 0.05, size = (entryD, filterSize, filterSize)))
+            self.filterTable.append(np.random.uniform(0, 0.05, size = (entryD, filterSize, filterSize)))
             #self.biasTable.append(np.random.uniform(-0.05, 0.05, size = (entryD, self.layH, self.layW)))
             self.filterErrors.append( np.zeros(shape = (entryD, filterSize, filterSize)))
             #self.biasErrors.append( np.zeros(shape = (entryD, self.layH, self.layW)))
@@ -82,9 +82,9 @@ class ConvLayer():
                             imageCp[filterPrev, channel,i: i+self.filterSize,
                             j: j+self.filterSize],
                             # le filtre
-                            np.rot90(self.filterTable[filters][channel], 2)).sum()) # rot180 pour faire une convolution et pas un correlation
+                            np.rot90(self.filterTable[filters][channel], 0)).sum())) # rot180 pour faire une convolution et pas un correlation
                             # le biais
-                            + self.biasTable)
+                            #+ self.biasTable)
 
 
 
@@ -123,20 +123,19 @@ class ConvLayer():
 
 
 
-    def computeWeightsTable(self, prevLayer, deltaTable):
+    def computeWeightsTable(self, deltaTable):
 
             for filters in range(self.nbFilters):
                 # print("mod: ", self.modEntry.shape)
-                # print("prev: ", np.array(prevLayer).shape)
-                for channel in range(np.array(prevLayer).shape[1]):
+                for channel in range(np.array(self.modEntry).shape[1]):
                     for m in range(self.filterErrors[filters].shape[1]):
                         for n in range(self.filterErrors[filters].shape[2]):
                             self.filterErrors[filters][channel, m, n] += np.multiply(
-                            deltaTable[filters,channel],
-                            np.rot90(self.modEntry[0, channel, m: m+self.layW, n: n+self.layH],0)
+                            np.rot90(deltaTable[filters,channel],0),
+                            self.modEntry[0, channel, m: m+self.layW, n: n+self.layH]
                             ).sum()
                             # print(self.filterErrors[filters][channel, m, n] )
-                self.biasErrors += deltaTable[filters].sum()
+                # self.biasErrors += deltaTable[filters].sum()
 
     def updateParams(self, nbTrainings):
         for filters in range(self.nbFilters):
@@ -144,8 +143,8 @@ class ConvLayer():
                         #print(self.filterTable[filters][channel])
                         self.filterTable[filters][channel] -= self.learningRate * ( 1/float(nbTrainings) * self.filterErrors[filters][channel])
                         self.filterErrors[filters][ channel] = 0
-                        self.biasTable -= self.learningRate * ( 1/float(nbTrainings) * self.biasErrors)
-                        self.biasErrors = 0
+                        # self.biasTable -= self.learningRate * ( 1/float(nbTrainings) * self.biasErrors)
+                        # self.biasErrors = 0
             #print(self.filterTable[filters])
 
 """
