@@ -13,20 +13,18 @@ labelled_images = imageReader.list_labelled_images2Dnew('train-images-idx3-ubyte
 test_images = imageReader.list_labelled_images2Dnew('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 5000, 0, 'digits')
 
 nbfilters = 1
-conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, 0.3)
-conv2 = ConvLayer(nbfilters,26,26,1,3,1,0, 0.3)
-fc = Perceptron([24*24*nbfilters,800,10], 0.3, 0.3    )
-batch  = 1
+conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, 0.7)
+conv2 = ConvLayer(nbfilters,26,26,1,3,1,0, 0.7)
+fc = Perceptron([24*24*nbfilters,800,10], 0.7, 0.7    )
+batch  = 10
 count = 0
 b = deepcopy(conv2.filterTable)
 a = deepcopy(conv1.filterTable)
-for i in range(int(10000/int(batch))):
+for i in range(int(5000/int(batch))):
         # print("CONV1: ",conv1.filterTable)
         # print("CONV2: ",conv2.filterTable)
         #print percep.layer[1], '\n \n'
         for k in range(batch):
-
-            activationList = []
             conv1.propagation(labelled_images[0][batch*i+k])
 
             conv2.propagation(np.array(conv1.activationTable))
@@ -43,11 +41,11 @@ for i in range(int(10000/int(batch))):
             # print("deltaTable AFTER: ", conv2.deltaTable[0][0,0])
 
             #print(conv2.deltaTable)
-            conv2.computeWeightsTable(conv1.activationTable, deltaTable)
+            conv2.computeWeightsTable(deltaTable)
             # print("fc layer : ", len(fc.lossPerLayer[0]))
             # print("deltaTable 2: ", np.array(conv2.deltaTable).shape)
             deltaTable2 = np.reshape(np.array(conv2.deltaTable), (1,1,26,26))
-            conv1.computeWeightsTable(labelled_images[0][batch*i+k], deltaTable2)
+            conv1.computeWeightsTable(deltaTable2)
             #print(fc.layers[-1])
             # print("ENTREE: ", np.reshape(np.array(fc.layers[0]), (24,24))[15])
             # print("LABEL: ", np.argmax(labelled_images[1][batch*i+k]))
@@ -62,7 +60,7 @@ for i in range(int(10000/int(batch))):
             count +=1
 
 count_test = 0
-for j in range(5):
+for j in range(5000):
     conv1.propagation(test_images[0][j])
     conv2.propagation(np.array(conv1.activationTable))
     fcInput = np.array(conv2.activationTable).flatten()
@@ -72,8 +70,10 @@ for j in range(5):
         count_test +=1
     print(count_test/float(j+1))
     print(np.argmax(test_images[1][j]))
-    print(np.argmax(fc.layers[-1]))
-    plt.matshow(np.reshape(np.array(conv1.activationTable), (26,26)),cmap=plt.cm.gray)
+    print("CONV1: ", np.array(conv1.activationTable)[0,0,12])
+    print("CONV2: ", np.array(conv2.activationTable)[0,0,12])
+    print(fc.layers[-1])
+    #plt.matshow(np.reshape(np.array(conv1.activationTable), (26,26)),cmap=plt.cm.gray)
 print("BEGINNING: ", a, b)
 print("END: ", conv1.filterTable, conv2.filterTable)
-plt.show()
+#plt.show()
