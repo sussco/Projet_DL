@@ -12,7 +12,7 @@ import imageReader
 labelled_images = imageReader.list_labelled_images2Dnew('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 15000, 0, 'digits')
 test_images = imageReader.list_labelled_images2Dnew('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 5000, 0, 'digits')
 
-nbfilters = 2
+nbfilters = 2 
 conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, 0.7)
 fc = Perceptron([26*26*nbfilters,800,10], 0.7, 0.7)
 batch  = 10
