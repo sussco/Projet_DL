@@ -35,7 +35,7 @@ for i in range(int(15000/int(batch))):
             conv1.computeWeightsTable(deltaTable)
             #print(fc.layers[-1])
         #print(conv.filterWeights)
-        #print(conv.filterWeightsTable)
+        #print(conv1.filterTable)
         fc.updateParams(batch)
         conv1.updateParams(batch)
         print (i)
@@ -43,7 +43,7 @@ for i in range(int(15000/int(batch))):
             count +=1
 
 count_test = 0
-for j in range(5000):
+for j in range(500):
     conv1.propagation(test_images[0][j])
     fcInput = np.array(conv1.activationTable).flatten()
     fc.propagationSoftMax(fcInput)
@@ -61,4 +61,6 @@ for j in range(5000):
 #print("BEGINNING: ", a)
 #print("END: ", conv1.filterTable)
 #print(conv1.biasTable)
-#plt.show()
+for i in range(nbfilters):
+    plt.matshow(conv1.filterTable[i][0], cmap = 'gray')
+plt.show()

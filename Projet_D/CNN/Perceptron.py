@@ -36,6 +36,12 @@ def vector_reLU(x):
         x[i] = reLU(x[i])
     return x
 
+def backProp_ReLU(x):
+    back = []
+    for i in range(len(x)):
+        back.append(1) if x[i]>0 else back.append(0.01)
+    return back
+
 
 class Perceptron:
 
@@ -76,6 +82,14 @@ class Perceptron:
             self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
 
+    def propagationSoftMax_ReLU(self, layIn):
+        assert len(layIn) == len(self.layers[0])
+        self.layers[0] = np.array(layIn)
+        for i in range(len(self.layers) -2):
+            self.layers[i + 1] = vector_reLU(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
+        self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
+
+
     def backPropagation(self, expectedOutput):
         self.lossPerLayer = []
         self.lossPerLayer.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
@@ -91,6 +105,17 @@ class Perceptron:
         self.lossPerLayer.append(-(expectedOutput - self.layers[-1]))
         for l in range(len(self.layers) - 2, -1, -1):
             a = np.matmul(np.transpose(self.weights[l]),self.lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l]))
+            self.lossPerLayer.append(a)
+        self.lossPerLayer.reverse()
+        for l in range(len(self.lossPerLayer) - 1):
+            self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += self.lossPerLayer[l + 1]
+
+    def backPropagationCE_RELU(self, expectedOutput):
+        self.lossPerLayer = []
+        self.lossPerLayer.append(-(expectedOutput - self.layers[-1]))
+        for l in range(len(self.layers) - 2, -1, -1):
+            a = np.matmul(np.transpose(self.weights[l]),self.lossPerLayer[-1])*backProp_ReLU(self.layers[l])
             self.lossPerLayer.append(a)
         self.lossPerLayer.reverse()
         for l in range(len(self.lossPerLayer) - 1):

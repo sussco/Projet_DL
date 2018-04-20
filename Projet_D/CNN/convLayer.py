@@ -34,14 +34,14 @@ class ConvLayer():
 
         self.activationTable = []
         self.filterTable = []
-        self.biasTable = np.random.uniform(0, 0.05)
+        self.biasTable = np.random.uniform(0, 0.5)
         self.filterErrors = []
         self.biasErrors = 0
         self.deltaTable = []
 
 
         for i in range(nbFilters):
-            self.filterTable.append(np.random.uniform(0, 0.05, size = (entryD, filterSize, filterSize)))
+            self.filterTable.append(np.random.uniform(0, 0.5, size = (entryD, filterSize, filterSize)))
             #self.biasTable.append(np.random.uniform(-0.05, 0.05, size = (entryD, self.layH, self.layW)))
             self.filterErrors.append( np.zeros(shape = (entryD, filterSize, filterSize)))
             #self.biasErrors.append( np.zeros(shape = (entryD, self.layH, self.layW)))
@@ -113,7 +113,7 @@ class ConvLayer():
                         self.deltaTable[filters][channel, i,j] =  np.multiply(
                         # la deltaTable de la couche suivante
                         deltaTableMod[filters,channel,i: i+self.filterSize,j: j+self.filterSize],
-                        np.rot90(self.filterTable[filters][channel], 0)
+                        np.rot90(self.filterTable[filters][channel], 2)
                         # derivee de la sigmoide
                         ).sum() * prevlayer[filters][channel, i, j]*(1-prevlayer[filters][channel, i, j])
                         #print(self.deltaTable[filters][channel, i,j])
