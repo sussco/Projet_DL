@@ -12,7 +12,17 @@ def sigmoid(x):
         ans = float('inf')
     return ans
 
+def reLU(x):
+    if(x>0):
+        return x
+    else:
+        return 0.01*x
 
+def backProp_ReLU(x):
+    if x>0:
+        return 1
+    else:
+        return 0.01
 
 
 class ConvLayer():
@@ -34,7 +44,7 @@ class ConvLayer():
 
         self.activationTable = []
         self.filterTable = []
-        self.biasTable = np.random.uniform(0, 0.5)
+        self.biasTable = np.random.uniform(0, 0.05)
         self.filterErrors = []
         self.biasErrors = 0
         self.deltaTable = []
@@ -86,6 +96,38 @@ class ConvLayer():
                             # le biais
                             #+ self.biasTable)
 
+    def propagation_ReLU(self, prevLayer):
+        # on copie l'image a traiter, elle va etre modifiee
+        #prevLayer = np.reshape(prevLayer, (self.nbFilters, ))
+        imageCp = deepcopy(prevLayer)
+        # ajout de zeros autour de l'image depend de l'entier zeroPad
+        for k in range(self.zeroPad):
+            imageCp = np.insert(imageCp, imageCp.shape[1], 0, axis = 1)
+            imageCp = np.insert(imageCp, imageCp.shape[2], 0, axis = 2)
+            imageCp = np.insert(imageCp,0,0, axis = 1)
+            imageCp = np.insert(imageCp,0,0, axis = 2)
+
+        # calcul de la sortie
+        # TODO: changer la shape dans la liste des images
+        #imageCp = np.reshape(imageCp, (self.entryD, self.layW+2*self.zeroPad, self.layH+2*self.zeroPad))
+        self.modEntry = imageCp
+        # pour chaque couleur
+        for filters in range(self.nbFilters):
+            for filterPrev in range(prevLayer.shape[0]):
+                for channel in  range(prevLayer.shape[1]):
+                    # i: lignes
+                    for i in range(0, imageCp.shape[2]-2*self.zeroPad-2, self.stride):
+                        # j : colonnes
+                        for j in range(0, imageCp.shape[3]-2*self.zeroPad-2, self.stride):
+                            # on calcule la sortie (self.activationTable)
+                            self.activationTable[filters+filterPrev][channel, i,j] =reLU((np.multiply(
+                            # le morceau de l'image a convoluer
+                            imageCp[filterPrev, channel,i: i+self.filterSize,
+                            j: j+self.filterSize],
+                            # le filtre
+                            np.rot90(self.filterTable[filters][channel], 0)).sum())) # rot180 pour faire une convolution et pas un correlation
+                            # le biais
+                            #+ self.biasTable)
 
 
     def computeDeltaTable(self, nextDeltaTable, prevlayer):
@@ -116,6 +158,37 @@ class ConvLayer():
                         np.rot90(self.filterTable[filters][channel], 2)
                         # derivee de la sigmoide
                         ).sum() * prevlayer[filters][channel, i, j]*(1-prevlayer[filters][channel, i, j])
+                        #print(self.deltaTable[filters][channel, i,j])
+            #print(self.deltaTable[filters])
+
+    def computeDeltaTable_ReLU(self, nextDeltaTable, prevlayer):
+        nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, 1, self.layW,self.layH))
+        #copie de la table, on va la modifier
+        deltaTableMod = deepcopy(nextDeltaTable)
+
+        #on met des zeros autour en fonction de la taille des filtres
+        for k in range(self.filterSize-1):
+            deltaTableMod = np.insert(deltaTableMod, deltaTableMod.shape[2], 0, axis = 2)
+            deltaTableMod = np.insert(deltaTableMod, deltaTableMod.shape[3], 0, axis = 3)
+            deltaTableMod = np.insert(deltaTableMod,0,0, axis = 2)
+            deltaTableMod = np.insert(deltaTableMod,0,0, axis = 3)
+        # print("deltatable L : ", np.array(self.deltaTable).shape)
+        # print("deltatable L+1 : ", np.array(deltaTableMod).shape)
+
+        #deltaTable : table des erreurs des activationTables (deltas)
+        # prevLayer : les activations de la couche l
+        for filters in range(self.nbFilters):
+            #Pour chaque couleur
+            for channel in range(self.entryD):
+                for i in range(self.entryH):
+                    for j in range(self.entryW):
+                        #Calcul de self.deltaTable
+                        self.deltaTable[filters][channel, i,j] =  np.multiply(
+                        # la deltaTable de la couche suivante
+                        deltaTableMod[filters,channel,i: i+self.filterSize,j: j+self.filterSize],
+                        np.rot90(self.filterTable[filters][channel], 2)
+                        # derivee de la sigmoide
+                        ).sum() * backProp_ReLU(prevlayer[filters][channel, i, j])
                         #print(self.deltaTable[filters][channel, i,j])
             #print(self.deltaTable[filters])
 

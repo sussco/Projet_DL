@@ -23,9 +23,9 @@ for glk in range(5):
     shuffle(labelled_images)
     print(np.array(labelled_images).shape)
     nbfilters = 1
-    conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, 0.7)
-    conv2 = ConvLayer(nbfilters,26,26,1,3,1,0, 0.7)
-    fc = Perceptron([24*24*nbfilters,800,10], 0.7, 0.7)
+    conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, 0.001)
+    conv2 = ConvLayer(nbfilters,26,26,1,3,1,0, 0.001)
+    fc = Perceptron([24*24*nbfilters,800,10], 0.001, 0.001)
     batch  = 10
     count = 0
     b = deepcopy(conv2.filterTable)
@@ -39,8 +39,8 @@ for glk in range(5):
                 conv2.propagation(np.array(conv1.activationTable))
                 # flatten input for fully connected
                 fcInput = np.array(conv2.activationTable).flatten()
-                fc.propagationSoftMax(fcInput)
-                fc.backPropagationCE(labelled_images[batch*i+k][1])
+                fc.propagationSoftMax_ReLU(fcInput)
+                fc.backPropagationCE_RELU(labelled_images[batch*i+k][1])
                 #print(labelled_images[0][batch*i+k].shape)
                 # print("conv2 entries : ", conv2.entryW, conv2.entryH)
                 deltaTable = np.reshape(fc.lossPerLayer[0], (1, conv2.entryD, conv2.layW, conv2.layH))
@@ -62,8 +62,8 @@ for glk in range(5):
             fc.updateParams(batch)
             conv2.updateParams(batch)
             conv1.updateParams(batch)
-            # print("FILTER 1: ", conv1.filterTable, "\n")
-            # print("FILTER 2: ", conv2.filterTable, "\n")
+            print("FILTER 1: ", conv1.filterTable, "\n")
+            print("FILTER 2: ", conv2.filterTable, "\n")
             print (i)
             if (np.argmax(fc.layers[-1]) == np.argmax(labelled_images[i][1])):
                 count +=1
