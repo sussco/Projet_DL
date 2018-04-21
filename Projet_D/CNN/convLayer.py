@@ -54,8 +54,7 @@ class ConvLayer():
 
 
     def propagation(self, prevLayer):
-        # on copie l'image a traiter, elle va etre modifiee
-        #prevLayer = np.reshape(prevLayer, (self.nbFilters, ))
+
         inPut = deepcopy(prevLayer)
         self.activationTable = np.zeros( (nbFilters, self.layH, self.layW) )
         # ajout de zeros autour de l'image depend de l'entier zeroPad
@@ -70,23 +69,21 @@ class ConvLayer():
             for i in range(0, self.layH , self.stride):
                 for j in range(0, self.layW, self.stride):
                     self.activationTable[filters, i, j] =
-                    np.sum(inPut[:,i: i+self.filterSize,
-                    j: j+self.filterSize] *
+                    np.sum(inPut[:,i: i+self.filterSize, j: j+self.filterSize] *
                     self.filterTable[filters]) # rot180 pour faire une convolution et pas un correlation
                     + self.bias[filters])
         return self.activationTable
 
     def computeDeltaTable(self, nextDeltaTable):
-        nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, , self.layW,self.layH))
+        nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, , self.layW, self.layH))
         self.deltaTable = np.zeros(shape = (entryD, self.entryH, self.entryW)))
-        for channel in range(self.inShape[0]):
             for filters in range(self.nbFilters):
             #Pour chaque couleur
                 for i in range(self.layH):
                     for j in range(self.layW):
                         #Calcul de self.deltaTable
-                        self.deltaTable[channel, i: i+self.filterSize,j: j+self.filterSize]
-                        += nextDeltaTable[filters, channel, i, j] * self.filterTable[filters][channel]
+                        self.deltaTable[:, i: i+self.filterSize,j: j+self.filterSize]
+                        += nextDeltaTable[filters, i, j] * self.filterTable[filters]
 
 
     def computeWeightsTable(self, nextDeltaTable):
@@ -94,14 +91,14 @@ class ConvLayer():
                 for channel in range(self.inShape[0]):
                     for m in range(self.layH):
                         for n in range(self.layW):
-                            self.filterErrors[filters,channel] +=
-                            NextDeltaTable[filters,channel, m, n] *
-                            self.inPut[channel, m: m+self.filterSize, n: n+self.filterSize]
+                            self.filterErrors[filters] +=
+                            NextDeltaTable[filters, m, n] *
+                            self.inPut[m: m+self.filterSize, n: n+self.filterSize]
 
     def computeBiasTable(self, nextDeltaTable):
         self.biasErrors = np.zeros(shape = (nfFilters))
         for filters in range(nbFilters):
-            self.biasErrors[filters] = np.sum(nextDeltaTable[filter])
+            self.biasErrors[filters] = np.sum(nextDeltaTable[filters])
 
     def backPropagation(self, nextDeltaTable):
         self.computeWeightTable(nextDeltaTable)
@@ -111,10 +108,7 @@ class ConvLayer():
 
     def updateParams(self, nbTrainings):
         for filters in range(self.nbFilters):
-            for channel in range(self.entryD):
-                        #print(self.filterTable[filters][channel])
-                        self.filterTable[filters][channel] -= self.learningRate * ( 1/float(nbTrainings) * self.filterErrors[filters][channel])
-                        self.filterErrors[filters][ channel] = 0
-                        self.bias[filters] -= self.learningRate * ( 1/float(nbTrainings) * self.biasErrors[filters])
-                        self.biasErrors[filters] = 0
-            #print(self.filterTable[filters])
+            self.filterTable[filters]-= self.learningRate * ( 1/float(nbTrainings) * self.filterErrors[filters])
+            self.filterErrors[filters] = 0
+            self.bias[filters] -= self.learningRate * ( 1/float(nbTrainings) * self.biasErrors[filters])
+            self.biasErrors[filters] = 0
