@@ -57,7 +57,7 @@ class ConvLayer():
         # on copie l'image a traiter, elle va etre modifiee
         #prevLayer = np.reshape(prevLayer, (self.nbFilters, ))
         inPut = deepcopy(prevLayer)
-        self.activationTable = np.zeros( (nbFilters, entryD, self.layH, self.layW) )
+        self.activationTable = np.zeros( (nbFilters, self.layH, self.layW) )
         # ajout de zeros autour de l'image depend de l'entier zeroPad
         for k in range(self.zeroPad):
             inPut = np.insert(inPut, inPut.shape[1], 0, axis = 1)
@@ -65,23 +65,15 @@ class ConvLayer():
             inPut = np.insert(inPut,0,0, axis = 1)
             inPut = np.insert(inPut,0,0, axis = 2)
 
-        # calcul de la sortie
-        # TODO: changer la shape dans la liste des images
-        #inPut = np.reshape(inPut, (self.entryD, self.layW+2*self.zeroPad, self.layH+2*self.zeroPad))
         self.inPut = inPut
-        # pour chaque couleur
         for filters in range(self.nbFilters):
-            for channel in  range(self.inShape[0]):
-                        # i: lignes
-                        for i in range(0, self.layH , self.stride):
-                            # j : colonnes
-                            for j in range(0, self.layW, self.stride):
-                                # on calcule la sortie (self.activationTable)
-                                self.activationTable[filters, channel, i, j] =
-                                np.multiply(inPut[channel,i: i+self.filterSize,
-                                j: j+self.filterSize],
-                                self.filterTable[filters,channel]).sum())) # rot180 pour faire une convolution et pas un correlation
-                                + self.bias[filter])
+            for i in range(0, self.layH , self.stride):
+                for j in range(0, self.layW, self.stride):
+                    self.activationTable[filters, i, j] =
+                    np.sum(inPut[:,i: i+self.filterSize,
+                    j: j+self.filterSize] *
+                    self.filterTable[filters]) # rot180 pour faire une convolution et pas un correlation
+                    + self.bias[filters])
         return self.activationTable
 
     def computeDeltaTable(self, nextDeltaTable):
