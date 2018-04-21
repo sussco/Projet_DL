@@ -10,7 +10,7 @@ from convLayer import ConvLayer
 from  Perceptron import Perceptron
 import imageReader
 
-labelled_images = imageReader.list_labelled_images2Dnew('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 60000, 0, 'digits')
+labelled_images = imageReader.list_labelled_images2Dnew('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 30000, 0, 'digits')
 test_images = imageReader.list_labelled_images2Dnew('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 10000, 0, 'digits')
 #SUCCESS:  [0.1596, 0.4126, 0.1213, 0.4184, 0.422] 0.7
 #SUCCESS:  [0.4289, 0.0571, 0.0571, 0.0571, 0.435] 0.8
@@ -19,24 +19,25 @@ test_images = imageReader.list_labelled_images2Dnew('t10k-images-idx3-ubyte', 't
 
 
 successes = []
-for glk in range(5):
+learningR = 0.001
+for glk in range(15):
     shuffle(labelled_images)
     print(np.array(labelled_images).shape)
     nbfilters = 1
-    conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, 0.001)
-    conv2 = ConvLayer(nbfilters,26,26,1,3,1,0, 0.001)
-    fc = Perceptron([24*24*nbfilters,800,10], 0.001, 0.001)
+    conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, learningR)
+    conv2 = ConvLayer(nbfilters,26,26,1,3,1,0, learningR)
+    fc = Perceptron([24*24*nbfilters,800,10], learningR, learningR)
     batch  = 10
     count = 0
     b = deepcopy(conv2.filterTable)
     a = deepcopy(conv1.filterTable)
-    for i in range(int(15000/int(batch))):
+    for i in range(int(30000/int(batch))):
             # print("CONV1: ",conv1.filterTable)
             # print("CONV2: ",conv2.filterTable)
             #print percep.layer[1], '\n \n'
             for k in range(batch):
-                conv1.propagation(labelled_images[batch*i+k][0])
-                conv2.propagation(np.array(conv1.activationTable))
+                conv1.propagation_ReLU(labelled_images[batch*i+k][0])
+                conv2.propagation_ReLU(np.array(conv1.activationTable))
                 # flatten input for fully connected
                 fcInput = np.array(conv2.activationTable).flatten()
                 fc.propagationSoftMax_ReLU(fcInput)
@@ -46,15 +47,15 @@ for glk in range(5):
                 deltaTable = np.reshape(fc.lossPerLayer[0], (1, conv2.entryD, conv2.layW, conv2.layH))
                 #print("DETLA FC : ", deltaTable)
                 # print("deltaTable BEFORE: ", conv2.deltaTable[0][0,0])
-                conv2.computeDeltaTable(deltaTable, conv1.activationTable)
+                conv2.computeDeltaTable_ReLU_Test(deltaTable, conv1.activationTable)
                 # print("deltaTable AFTER: ", conv2.deltaTable[0][0,0])
 
                 #print(conv2.deltaTable)
-                conv2.computeWeightsTable(deltaTable)
+                conv2.computeWeightsTable_Test(deltaTable)
                 # print("fc layer : ", len(fc.lossPerLayer[0]))
                 # print("deltaTable 2: ", np.array(conv2.deltaTable).shape)
                 deltaTable2 = np.reshape(np.array(conv2.deltaTable), (1,1,26,26))
-                conv1.computeWeightsTable(deltaTable2)
+                conv1.computeWeightsTable_Test(deltaTable2)
                 #print(fc.layers[-1])
                 # print("ENTREE: ", np.reshape(np.array(fc.layers[0]), (24,24))[15])
                 # print("LABEL: ", np.argmax(labelled_images[1][batch*i+k]))
@@ -70,8 +71,8 @@ for glk in range(5):
 
     count_test = 0
     for j in range(10000):
-        conv1.propagation(test_images[j][0])
-        conv2.propagation(np.array(conv1.activationTable))
+        conv1.propagation_ReLU(test_images[j][0])
+        conv2.propagation_ReLU(np.array(conv1.activationTable))
         fcInput = np.array(conv2.activationTable).flatten()
         fc.propagationSoftMax(fcInput)
         print(fc.layers[-1])
@@ -79,10 +80,10 @@ for glk in range(5):
             count_test +=1
         print(count_test/float(j+1))
         print(np.argmax(test_images[j][1]))
-        print("INPUT: ", np.reshape(np.array(test_images[j][0]), (28,28))[12])
-        print("CONV1: ", np.array(conv1.activationTable)[0,0,12])
-        print("CONV2: ", np.array(conv2.activationTable)[0,0,12])
-        print("OUT: ", fc.layers[-1])
+        # print("INPUT: ", np.reshape(np.array(test_images[j][0]), (28,28))[12])
+        # print("CONV1: ", np.array(conv1.activationTable)[0,0,12])
+        # print("CONV2: ", np.array(conv2.activationTable)[0,0,12])
+        # print("OUT: ", fc.layers[-1])
         #plt.matshow(np.reshape(np.array(conv1.activationTable), (26,26)),cmap=plt.cm.gray)
     print("BEGINNING: ", a, b)
     print("END: ", conv1.filterTable, conv2.filterTable)

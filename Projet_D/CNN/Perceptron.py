@@ -110,6 +110,7 @@ class Perceptron:
         for l in range(len(self.lossPerLayer) - 1):
             self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
             self.biaisTable[l] += self.lossPerLayer[l + 1]
+        return(self.lossPerLayer[0])
 
     def backPropagationCE_RELU(self, expectedOutput):
         self.lossPerLayer = []

@@ -14,7 +14,7 @@ labelled_images = imageReader.list_labelled_images2Dnew('train-images-idx3-ubyte
 test_images = imageReader.list_labelled_images2Dnew('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 10000, 0, 'digits')
 shuffle(labelled_images)
 nbfilters = 1
-learningR = 0.005
+learningR = 0.1
 conv1 = ConvLayer(nbfilters,28,28,1,3,1,0, learningR)
 fc = Perceptron([26*26*nbfilters,500,10], learningR, learningR)
 batch  = 10
@@ -22,19 +22,17 @@ count = 0
 a = deepcopy(conv1.filterTable)
 
 #conv.filterWeights = np.array([[[0],[0],[0]],[[0],[1],[0]],[[0],[0],[0]]])
-for i in range(int(3000/int(batch))):
+for i in range(int(15000/int(batch))):
         #print percep.layer[1], '\n \n'
         for k in range(batch):
             conv1.propagation_ReLU(labelled_images[batch*i+k][0])
-
-
             # flatten input for fully connected
             fcInput = np.array(conv1.activationTable).flatten()
             fc.propagationSoftMax_ReLU(fcInput)
             fc.backPropagationCE_RELU(labelled_images[batch*i+k][1])
             # print(len(fc.lossPerLayer[0]))
             deltaTable = np.reshape(fc.lossPerLayer[0], (nbfilters, conv1.entryD, conv1.layW, conv1.layH))
-            conv1.computeWeightsTable(deltaTable)
+            conv1.computeWeightsTable_Test(deltaTable)
             #print(fc.layers[-1])
         #print(conv.filterWeights)
         print(conv1.filterTable)
@@ -49,7 +47,7 @@ for i in range(int(3000/int(batch))):
         # print(count/float(i+1))
 count_test = 0
 for j in range(10000):
-    conv1.propagation(test_images[j][0])
+    conv1.propagation_ReLU(test_images[j][0])
     fcInput = np.array(conv1.activationTable).flatten()
     fc.propagationSoftMax_ReLU(fcInput)
     #print("ENTREE: ", np.reshape(np.array(fc.layers[0]), (26,26))[15])
@@ -58,7 +56,8 @@ for j in range(10000):
     print(count_test/float(j+1))
     print(np.argmax(fc.layers[-1]))
     print(np.argmax(test_images[j][1]))
-    print(conv1.activationTable[0][0,12])
+    # print("INPUT",  np.reshape(np.array(test_images[j][0]), (28,28))[0:3,0:3])
+    # print("CONV OUT", conv1.activationTable[0][0,0,0])
     print(fc.layers[-1])
 print(learningR)
 """for lk in range(nbfilters):
