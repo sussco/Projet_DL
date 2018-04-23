@@ -14,7 +14,7 @@ def sigmoid(x):
 
 class ConvLayer():
 
-    def __init__(self, nbfilters = 1, entryW=4, entryH=4, entryD=3, filterSize = 3, stride=1, zeroPad=1, lr = 0.2):
+    def __init__(self, entryW=4, entryH=4, entryD=3, nbfilters = 1, filterSize = 3, stride=1, zeroPad=1):
 
         # Dimensions de l'image d'entree
         self.entryH = entryH
@@ -89,7 +89,7 @@ class ConvLayer():
 
 class ConvLayer2D():
 
-    def __init__(self, entryW=4, entryH=4, entryD=3, filterSize = 3, stride=1, zeroPad=1, lr = 0.2): #For 1 channel = for 1 dim im
+    def __init__(self, entryW=4, entryH=4, entryD=3, filterSize = 3, stride=1, zeroPad=1): #For 1 channel = for 1 dim im
 
         # Calcul des dimensions de la sortie
         # depend de zeroPad et de stride
@@ -214,11 +214,11 @@ class ConvLayer2D():
 
 
 
-    def updateParams(self, nbTrainings):
+    def updateParams(self, nbTrainings, learningR):
         for channel in range(self.filterWeightsTable.shape[2]):
-                    self.filterWeights[::, ::, channel] -= self.learningRate * ( 1/float(nbTrainings) * self.filterWeightsTable[::, ::, channel])
+                    self.filterWeights[::, ::, channel] -= learningR * ( 1/float(nbTrainings) * self.filterWeightsTable[::, ::, channel])
                     self.filterWeightsTable[::, ::, channel] = 0
-                    self.filterBias[::, ::, channel] -= self.learningRate * ( 1/float(nbTrainings) * self.filterBiasTable[::, ::, channel])
+                    self.filterBias[::, ::, channel] -= learningR * ( 1/float(nbTrainings) * self.filterBiasTable[::, ::, channel])
                     self.filterBiasTable[::, ::, channel] = 0
 
 """

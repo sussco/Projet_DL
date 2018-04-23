@@ -60,7 +60,7 @@ def list_labelled_images2D(image_file, label_file, nbr, number_offset, mode):
     for i in range(nbr):
         lines_im = np.array(list(image.read(784)))
         lines_im = lines_im/float(255)
-        lines_im = np.reshape(lines_im, (28,28,1))
+        lines_im = np.reshape(lines_im, (1,28,28))
         image_list.append(lines_im)
         if(mode == 'letters'):
             label_list.append(np.zeros(26))
@@ -82,7 +82,7 @@ def list_labelled_images2Dnew(image_file, label_file, nbr, number_offset, mode):
     for i in range(nbr):
         lines_im = np.array(list(image.read(784)))
         lines_im = lines_im/float(255)
-        lines_im = np.reshape(lines_im, (1,1,28,28))
+        lines_im = np.reshape(lines_im, (1,28,28))
         if(mode == 'letters'):
             zeros = np.zeros(26)
             a = ord(label.read(1))

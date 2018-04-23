@@ -46,7 +46,7 @@ def backProp_ReLU(x):
 class Perceptron:
 
 
-    def __init__(self, list_of_layers, learningRate, importance):
+    def __init__(self, list_of_layers):
         self.weightsTable = []
         self.biaisTable = []
         self.layers = []
@@ -61,14 +61,14 @@ class Perceptron:
             self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.05)
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
-        self.learningRate = learningRate
-        self.importance = importance
 
 
 
 
-    def propagation(self, layIn):
-        np.array(layIn).flatten()
+    def propagation_Normal(self, layIn):
+        self.inShape = layIn.shape
+        layIn = np.array(layIn).flatten()
+        print(len(layIn))
         assert len(layIn) == len(self.layers[0])
         self.layers[0] = np.array(layIn)
         for i in range(len(self.layers) - 1):
@@ -82,7 +82,9 @@ class Perceptron:
             self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
 
-    def propagationSoftMax_ReLU(self, layIn):
+    def propagation(self, layIn):
+        self.inShape = layIn.shape
+        layIn = np.array(layIn).flatten()
         assert len(layIn) == len(self.layers[0])
         self.layers[0] = np.array(layIn)
         for i in range(len(self.layers) -2):
@@ -90,7 +92,7 @@ class Perceptron:
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
 
 
-    def backPropagation(self, expectedOutput):
+    def backPropagation_Normal(self, expectedOutput):
         self.lossPerLayer = []
         self.lossPerLayer.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
         for l in range(len(self.layers) - 2, -1, -1):
@@ -99,8 +101,9 @@ class Perceptron:
         for l in range(len(self.lossPerLayer) - 1):
             self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
             self.biaisTable[l] += self.lossPerLayer[l + 1]
+        return np.reshape(self.lossPerLayer[0], self.inShape)
 
-    def backPropagationCE(self, expectedOutput):
+    def backPropagation(self, expectedOutput):
         self.lossPerLayer = []
         self.lossPerLayer.append(-(expectedOutput - self.layers[-1]))
         for l in range(len(self.layers) - 2, -1, -1):
@@ -110,7 +113,7 @@ class Perceptron:
         for l in range(len(self.lossPerLayer) - 1):
             self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
             self.biaisTable[l] += self.lossPerLayer[l + 1]
-        return(self.lossPerLayer[0])
+        return np.reshape(self.lossPerLayer[0], self.inShape)
 
     def backPropagationCE_RELU(self, expectedOutput):
         self.lossPerLayer = []
@@ -124,11 +127,11 @@ class Perceptron:
             self.biaisTable[l] += self.lossPerLayer[l + 1]
 
 
-    def updateParams(self, nbTrainings):
+    def updateParams(self, nbTrainings, learningR):
         for l in range(len(self.layers) - 1):
-            self.weights[l] -= self.learningRate * ( 1/float(nbTrainings) * self.weightsTable[l])
+            self.weights[l] -= learningR * ( 1/float(nbTrainings) * self.weightsTable[l])
             self.weightsTable[l] = 0
-            self.biais[l] -= self.learningRate * ( 1/float(nbTrainings) * self.biaisTable[l])
+            self.biais[l] -= learningR * ( 1/float(nbTrainings) * self.biaisTable[l])
             self.biaisTable[l] = 0
 
     def quadratic_error(self, expected):

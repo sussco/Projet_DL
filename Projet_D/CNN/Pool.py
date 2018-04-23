@@ -1,52 +1,51 @@
-class Pooling():
+import numpy as np
+
+class Pool():
 
 
 
-    def __init__(self):
-        self.chosenOne = [];
+    def __init__(self, poolSize):
+        self.poolSize = poolSize
 
 
 
 
 
-    def propagation(self,image, poolSize, poolType):
-        x = image.shape[0] % poolSize
-        y = image.shape[1] % poolSize
+    def propagation(self,image):
+        poolSize = self.poolSize
+        x = image.shape[1] % poolSize
+        y = image.shape[2] % poolSize
         imageCp = image
         for i in range(x):
-            imageCp = np.insert(image, image.shape[1], 0, axis = 1)
+            imageCp = np.insert(image, image.shape[2], 0, axis = 2)
         for i in range(y):
-            imageCp = np.insert(imageCp,imageCp.shape[0],0, axis = 0)
-        output = np.zeros((imageCp.shape[0]/poolSize, imageCp.shape[1]/poolSize))
-        self.chosenOne = np.zeros((output.shape[0], output.shape[1], 2))
-        print(imageCp)
-        i = j = 2
-        if poolType == "maximum":
-            for i in range(0,image.shape[0], poolSize):
-                for j in range(0, image.shape[1], poolSize):
-                    output[i/poolSize,j/poolSize] = np.max(imageCp[i: i + poolSize, j : j + poolSize])
-                    a = np.argmax((imageCp[i: i + poolSize, j : j + poolSize]))
-                    self.chosenOne[i/poolSize,j/poolSize] = [i + a /poolSize ,j + a% poolSize]
-            return output
-        if poolType == "average":
-            for i in range(len(image.shape[0]) - x, poolSize):
-                for j in range(len(image.shape[1]) - y, poolSize):
-                    output[i,j] = image[i: i + poolSize, j : j + poolSize].sum() / (poolSize**2)
-            return output
-        if poolType == "quadratic":
-            for i in range(len(image.shape[0]) - x, poolSize):
-                for j in range(len(image.shape6[1]) - y, poolSize):
-                    output[i,j] = math.sqrt(((image[i: i + poolSize, j : j + poolSize])**2).sum())
-            return output
-        else:
-            raise NameError("This pooling function hasn't been implemented yet")
+            imageCp = np.insert(imageCp,imageCp.shape[1],0, axis = 1)
+        output = np.zeros((imageCp.shape[0] ,int(imageCp.shape[1]/poolSize), int(imageCp.shape[2]/poolSize)))
+        self.chosenOne = np.zeros((imageCp.shape[0] ,imageCp.shape[1], imageCp.shape[2]))
+        for depth in range(image.shape[0]):
+            for i in range(0,image.shape[1], poolSize):
+                for j in range(0, image.shape[2], poolSize):
+                    output[depth, int(i/poolSize),int(j/poolSize)] = np.max(imageCp[depth, i: i + poolSize, j : j + poolSize])
+                    a = np.unravel_index(imageCp[depth, i: i + poolSize, j : j + poolSize].argmax(), imageCp[depth, i: i + poolSize, j : j + poolSize].shape)
+                    self.chosenOne[depth, i+a[0]%poolSize, j + a[1]% poolSize] = 1
+        print(output.shape)
+        return output
 
-    def backPropagation(self, deltasTable):
+    def backPropagation(self, deltaTable):
+        poolSize = self.poolSize
+        for depth in range(deltaTable.shape[0]):
+            for i in range(deltaTable.shape[1]):
+                for j in range(deltaTable.shape[2]):
+                    self.chosenOne[depth, i*poolSize: i*poolSize+poolSize, j*poolSize: j*poolSize+poolSize] = self.chosenOne[depth, i*poolSize: i*poolSize+poolSize, j*poolSize: j*poolSize+poolSize]*deltaTable[depth,i,j]
         return self.chosenOne
 
-test = np.array([[-1,0,1],[-2,0,4],[-1,0,1]])
+"""
+test = np.random.randint(0,4, size = (3,4,4))
 print(test)
-print(test.shape)
 a = Pooling()
-print(a.pooling(test,2,"maximum"))
-print(a.chosenOne)
+print(a.propagation(test,2,"maximum"))
+
+test2 = np.random.randint(0,4, size = (3,2,2))
+print("test2:\n", test2)
+print(a.backPropagation(test2))
+"""

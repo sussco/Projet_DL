@@ -1,7 +1,7 @@
 
 import numpy as np
 
-class RELU_LAYER:
+class ReLU:
     def __init__(self):
         pass
 
@@ -13,4 +13,4 @@ class RELU_LAYER:
     def backPropagation(self, nextDeltaTable):
 
         self.deltaTable = nextDeltaTable * (self.inPut >= 0)
-        return self.delta_X
+        return self.deltaTable
