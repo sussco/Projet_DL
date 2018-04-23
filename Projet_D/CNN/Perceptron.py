@@ -55,9 +55,9 @@ class Perceptron:
         self.lossPerLayer = []
 
         for i in range(len(list_of_layers)):
-            self.layers.append(np.random.uniform(0, 1e-6, size = list_of_layers[i]))
+            self.layers.append(np.random.uniform(0, 1e-2, size = list_of_layers[i]))
         for j in range(len(list_of_layers)-1):
-            self.biais.append(np.random.uniform(0, 1e-6, size = list_of_layers[j+1]))
+            self.biais.append(np.random.uniform(0, 1e-2, size = list_of_layers[j+1]))
             self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.05)
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))

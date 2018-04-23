@@ -3,8 +3,8 @@ import imageReader
 
 
 
-labelled_images = imageReader.list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 2000, 0, 'digits')
-test_images = imageReader.list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 500, 0, 'digits')
+labelled_images = imageReader.list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 100, 0, 'digits')
+test_images = imageReader.list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 50, 0, 'digits')
 
 
 neuralNet = Net()

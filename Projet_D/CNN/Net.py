@@ -47,7 +47,9 @@ class Net():
     def test(self, inputs, labels):
         count_test = 0
         for i in range(len(inputs)):
-                output = self.propagation(inputs[i])
-                if (np.argmax(output) == np.argmax(labels[i])):
+                if (np.argmax(self.propagation(inputs[i])) == np.argmax(labels[i])):
                     count_test +=1
                 print(count_test/float(i+1))
+                print()
+        # print(self.layers[0].filterTable)
+        # print(self.layers[3].filterTable)

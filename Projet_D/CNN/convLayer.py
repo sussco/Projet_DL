@@ -41,8 +41,8 @@ class ConvLayer():
 
 
         self.filterErrors = np.zeros(shape = (nbFilters, entryD, filterSize, filterSize))
-        self.filterTable =np.random.uniform(0, 1e-6, size = (nbFilters, entryD, filterSize, filterSize))
-        self.bias = np.random.uniform(0, 1e-6, size = (nbFilters))
+        self.filterTable =np.random.uniform(0, 1e-2, size = (nbFilters, entryD, filterSize, filterSize))
+        self.bias = np.random.uniform(0, 1e-2, size = (nbFilters))
 
 
 
