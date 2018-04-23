@@ -41,8 +41,8 @@ class ConvLayer():
 
 
         self.filterErrors = np.zeros(shape = (nbFilters, entryD, filterSize, filterSize))
-        self.filterTable =np.random.uniform(0, 0.05, size = (nbFilters, entryD, filterSize, filterSize))
-        self.bias = np.random.uniform(0, 0.05, size = (nbFilters))
+        self.filterTable =np.random.uniform(0, 1e-6, size = (nbFilters, entryD, filterSize, filterSize))
+        self.bias = np.random.uniform(0, 1e-6, size = (nbFilters))
 
 
 
@@ -69,51 +69,45 @@ class ConvLayer():
             for i in range(0, self.layH , self.stride):
                 for j in range(0, self.layW, self.stride):
                     self.activationTable[filters, i, j] = \
-                    np.sum(inPut[:,i: i+self.filterSize,
-                    j: j+self.filterSize] *
-                    self.filterTable[filters])
+                    np.sum(inPut[:,i: i+self.filterSize, j: j+self.filterSize] *
+                    self.filterTable[filters]) # rot180 pour faire une convolution et pas un correlation
                     + self.bias[filters]
         return self.activationTable
 
     def computeDeltaTable(self, nextDeltaTable):
-        nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, self.layW,self.layH))
-        self.deltaTable = np.zeros(shape = (entryD, self.entryH, self.entryW))
-        for channel in range(self.inShape[0]):
-            for filters in range(self.nbFilters):
-            #Pour chaque couleur
-                for i in range(self.layH):
-                    for j in range(self.layW):
-                        #Calcul de self.deltaTable
-                        self.deltaTable[channel, i: i+self.filterSize,j: j+self.filterSize] += \
-                        nextDeltaTable[filters, channel, i, j] * self.filterTable[filters][channel]
-
+        nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, self.layW, self.layH))
+        self.deltaTable = np.zeros(shape = self.inShape)
+        deltaPadded = np.zeros(shape = self.inPut.shape)
+        for filters in range(self.nbFilters):
+            for i in range(self.layH):
+                for j in range(self.layW):
+                    deltaPadded[:, i: i+self.filterSize,j: j+self.filterSize]+= \
+                    nextDeltaTable[filters, i, j] * self.filterTable[filters]
+        self.deltaTable = deltaPadded[:, self.zeroPad:-self.zeroPad, self.zeroPad:-self.zeroPad]
+        return self.deltaTable
 
     def computeWeightsTable(self, nextDeltaTable):
             for filters in range(self.nbFilters):
-                for channel in range(self.inShape[0]):
                     for m in range(self.layH):
                         for n in range(self.layW):
-                            self.filterErrors[filters,channel] += \
-                            NextDeltaTable[filters,channel, m, n] * \
-                            self.inPut[channel, m: m+self.filterSize, n: n+self.filterSize]
+                            self.filterErrors[filters] += \
+                            nextDeltaTable[filters, m, n] * \
+                            self.inPut[:, m: m+self.filterSize, n: n+self.filterSize]
 
     def computeBiasTable(self, nextDeltaTable):
-        self.biasErrors = np.zeros(shape = (nfFilters))
-        for filters in range(nbFilters):
-            self.biasErrors[filters] = np.sum(nextDeltaTable[filter])
+        self.biasErrors = np.zeros(shape = (self.nbFilters))
+        for filters in range(self.nbFilters):
+            self.biasErrors[filters] = np.sum(nextDeltaTable[filters])
 
     def backPropagation(self, nextDeltaTable):
-        self.computeWeightTable(nextDeltaTable)
+        self.computeWeightsTable(nextDeltaTable)
         self.computeBiasTable(nextDeltaTable)
         return self.computeDeltaTable(nextDeltaTable)
 
 
     def updateParams(self, nbTrainings, learningR):
         for filters in range(self.nbFilters):
-            for channel in range(self.entryD):
-                        #print(self.filterTable[filters][channel])
-                        self.filterTable[filters][channel] -= learningR * ( 1/float(nbTrainings) * self.filterErrors[filters][channel])
-                        self.filterErrors[filters][ channel] = 0
-                        self.bias[filters] -= learningR * ( 1/float(nbTrainings) * self.biasErrors[filters])
-                        self.biasErrors[filters] = 0
-            #print(self.filterTable[filters])
+            self.filterTable[filters]-= learningR * ( 1/float(nbTrainings) * self.filterErrors[filters])
+            self.filterErrors[filters] = 0
+            self.bias[filters] -= learningR * ( 1/float(nbTrainings) * self.biasErrors[filters])
+            self.biasErrors[filters] = 0

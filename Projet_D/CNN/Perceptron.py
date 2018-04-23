@@ -55,9 +55,9 @@ class Perceptron:
         self.lossPerLayer = []
 
         for i in range(len(list_of_layers)):
-            self.layers.append(np.random.uniform(0, 0.05, size = list_of_layers[i]))
+            self.layers.append(np.random.uniform(0, 1e-6, size = list_of_layers[i]))
         for j in range(len(list_of_layers)-1):
-            self.biais.append(np.random.uniform(0, 0.05, size = list_of_layers[j+1]))
+            self.biais.append(np.random.uniform(0, 1e-6, size = list_of_layers[j+1]))
             self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.05)
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
@@ -68,19 +68,11 @@ class Perceptron:
     def propagation_Normal(self, layIn):
         self.inShape = layIn.shape
         layIn = np.array(layIn).flatten()
-        print(len(layIn))
         assert len(layIn) == len(self.layers[0])
         self.layers[0] = np.array(layIn)
         for i in range(len(self.layers) - 1):
             self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         return self.layers[-1]
-
-    def propagationSoftMax(self, layIn):
-        assert len(layIn) == len(self.layers[0])
-        self.layers[0] = np.array(layIn)
-        for i in range(len(self.layers) -2):
-            self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
-        self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
 
     def propagation(self, layIn):
         self.inShape = layIn.shape
@@ -88,9 +80,20 @@ class Perceptron:
         assert len(layIn) == len(self.layers[0])
         self.layers[0] = np.array(layIn)
         for i in range(len(self.layers) -2):
+            self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
+        self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
+        return self.layers[-1]
+
+
+    def propagationSoftMaxRelu(self, layIn):
+        self.inShape = layIn.shape
+        layIn = np.array(layIn).flatten()
+        assert len(layIn) == len(self.layers[0])
+        self.layers[0] = np.array(layIn)
+        for i in range(len(self.layers) -2):
             self.layers[i + 1] = vector_reLU(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
-
+        return self.layers[-1]
 
     def backPropagation_Normal(self, expectedOutput):
         self.lossPerLayer = []
