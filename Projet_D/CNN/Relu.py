@@ -8,6 +8,7 @@ class ReLU:
     def propagation(self, X):
         self.inPut = X
         self.activationTable = np.maximum(X, 0)
+        #print(np.count_nonzero(self.activationTable)/np.size(self.inPut))
         return self.activationTable
 
     def backPropagation(self, nextDeltaTable):

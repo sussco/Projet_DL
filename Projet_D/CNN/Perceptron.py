@@ -52,13 +52,13 @@ class Perceptron:
         self.layers = []
         self.biais = []
         self.weights = []
-        self.lossPerLayer = []
+        self.deltaTable = []
 
         for i in range(len(list_of_layers)):
-            self.layers.append(np.random.uniform(0, 1e-6, size = list_of_layers[i]))
+            self.layers.append(np.random.uniform(0, 1e-2, size = list_of_layers[i]))
         for j in range(len(list_of_layers)-1):
-            self.biais.append(np.random.uniform(0, 1e-6, size = list_of_layers[j+1]))
-            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.05)
+            self.biais.append(np.random.uniform(0, 1e-2, size = list_of_layers[j+1]))
+            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*1e-2)
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
 
@@ -82,6 +82,7 @@ class Perceptron:
         for i in range(len(self.layers) -2):
             self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
+        print(self.layers[1][20:30])
         return self.layers[-1]
 
 
@@ -96,38 +97,38 @@ class Perceptron:
         return self.layers[-1]
 
     def backPropagation_Normal(self, expectedOutput):
-        self.lossPerLayer = []
-        self.lossPerLayer.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
+        self.deltaTable = []
+        self.deltaTable.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
         for l in range(len(self.layers) - 2, -1, -1):
-            self.lossPerLayer.append(np.matmul(np.transpose(self.weights[l]),self.lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l])))
-        self.lossPerLayer.reverse()
-        for l in range(len(self.lossPerLayer) - 1):
-            self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
-            self.biaisTable[l] += self.lossPerLayer[l + 1]
-        return np.reshape(self.lossPerLayer[0], self.inShape)
+            self.deltaTable.append(np.matmul(np.transpose(self.weights[l]),self.deltaTable[-1])*(self.layers[l] * (1 - self.layers[l])))
+        self.deltaTable.reverse()
+        for l in range(len(self.deltaTable) - 1):
+            self.weightsTable[l] += np.outer(self.deltaTable[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += self.deltaTable[l + 1]
+        return np.reshape(self.deltaTable[0], self.inShape)
 
     def backPropagation(self, expectedOutput):
-        self.lossPerLayer = []
-        self.lossPerLayer.append(-(expectedOutput - self.layers[-1]))
+        self.deltaTable = []
+        self.deltaTable.append(-(expectedOutput - self.layers[-1]))
         for l in range(len(self.layers) - 2, -1, -1):
-            a = np.matmul(np.transpose(self.weights[l]),self.lossPerLayer[-1])*(self.layers[l] * (1 - self.layers[l]))
-            self.lossPerLayer.append(a)
-        self.lossPerLayer.reverse()
-        for l in range(len(self.lossPerLayer) - 1):
-            self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
-            self.biaisTable[l] += self.lossPerLayer[l + 1]
-        return np.reshape(self.lossPerLayer[0], self.inShape)
+            a = np.matmul(np.transpose(self.weights[l]),self.deltaTable[-1])*(self.layers[l] * (1 - self.layers[l]))
+            self.deltaTable.append(a)
+        self.deltaTable.reverse()
+        for l in range(len(self.deltaTable) - 1):
+            self.weightsTable[l] += np.outer(self.deltaTable[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += self.deltaTable[l + 1]
+        return np.reshape(self.deltaTable[0], self.inShape)
 
     def backPropagationCE_RELU(self, expectedOutput):
-        self.lossPerLayer = []
-        self.lossPerLayer.append(-(expectedOutput - self.layers[-1]))
+        self.deltaTable = []
+        self.deltaTable.append(-(expectedOutput - self.layers[-1]))
         for l in range(len(self.layers) - 2, -1, -1):
-            a = np.matmul(np.transpose(self.weights[l]),self.lossPerLayer[-1])*backProp_ReLU(self.layers[l])
-            self.lossPerLayer.append(a)
-        self.lossPerLayer.reverse()
-        for l in range(len(self.lossPerLayer) - 1):
-            self.weightsTable[l] += np.outer(self.lossPerLayer[l + 1], np.transpose(self.layers[l]))
-            self.biaisTable[l] += self.lossPerLayer[l + 1]
+            a = np.matmul(np.transpose(self.weights[l]),self.deltaTable[-1])*backProp_ReLU(self.layers[l])
+            self.deltaTable.append(a)
+        self.deltaTable.reverse()
+        for l in range(len(self.deltaTable) - 1):
+            self.weightsTable[l] += np.outer(self.deltaTable[l + 1], np.transpose(self.layers[l]))
+            self.biaisTable[l] += self.deltaTable[l + 1]
 
 
     def updateParams(self, nbTrainings, learningR):

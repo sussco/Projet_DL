@@ -43,7 +43,7 @@ class ConvLayer():
         self.filterErrors = np.zeros(shape = (nbFilters, entryD, filterSize, filterSize))
         self.filterTable =np.random.uniform(0, 1e-2, size = (nbFilters, entryD, filterSize, filterSize))
         self.bias = np.random.uniform(0, 1e-2, size = (nbFilters))
-
+        #print(self.filterTable[0][0])
 
 
             #self.biasErrors.append( np.zeros(shape = (entryD, self.layH, self.layW)))
@@ -68,9 +68,10 @@ class ConvLayer():
         for filters in range(self.nbFilters):
             for i in range(0, self.layH , self.stride):
                 for j in range(0, self.layW, self.stride):
+                    #print(inPut[:,i: i+self.filterSize, j: j+self.filterSize])
                     self.activationTable[filters, i, j] = \
                     np.sum(inPut[:,i: i+self.filterSize, j: j+self.filterSize] *
-                    self.filterTable[filters]) # rot180 pour faire une convolution et pas un correlation
+                    self.filterTable[filters,:,:,:])
                     + self.bias[filters]
         return self.activationTable
 
@@ -83,16 +84,20 @@ class ConvLayer():
                 for j in range(self.layW):
                     deltaPadded[:, i: i+self.filterSize,j: j+self.filterSize]+= \
                     nextDeltaTable[filters, i, j] * self.filterTable[filters]
-        self.deltaTable = deltaPadded[:, self.zeroPad:-self.zeroPad, self.zeroPad:-self.zeroPad]
+        if(self.zeroPad != 0):
+            self.deltaTable = deltaPadded[:, self.zeroPad:-self.zeroPad, self.zeroPad:-self.zeroPad]
+        else :
+            self.deltaTable = deltaPadded
         return self.deltaTable
 
     def computeWeightsTable(self, nextDeltaTable):
             for filters in range(self.nbFilters):
                     for m in range(self.layH):
                         for n in range(self.layW):
-                            self.filterErrors[filters] += \
+                            self.filterErrors[filters,:,:,:] += \
                             nextDeltaTable[filters, m, n] * \
                             self.inPut[:, m: m+self.filterSize, n: n+self.filterSize]
+
 
     def computeBiasTable(self, nextDeltaTable):
         self.biasErrors = np.zeros(shape = (self.nbFilters))
