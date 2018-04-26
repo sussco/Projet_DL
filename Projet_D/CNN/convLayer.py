@@ -42,8 +42,8 @@ class ConvLayer():
 
 
         self.filterErrors = np.zeros(shape = (nbFilters, entryD, filterSize, filterSize))
-        self.filterTable =np.random.uniform(0, 1e-2, size = (nbFilters, entryD, filterSize, filterSize))
-        self.bias = np.random.uniform(0, 1e-2, size = (nbFilters))
+        self.filterTable =np.random.uniform(0, 1e-1, size = (nbFilters, entryD, filterSize, filterSize))
+        self.bias = np.random.uniform(0, 1e-1, size = (nbFilters))
         self.biasErrors = np.zeros(shape = (self.nbFilters))
 
 
@@ -62,6 +62,7 @@ class ConvLayer():
             for input_depth in range(self.inShape[0]):
                 self.activationTable[filters] += scipy.signal.convolve2d(padded_input[input_depth], rotated_filter[filters, input_depth], mode='valid')
             self.activationTable[filters] += self.bias[filters]
+        # print(self.filterTable)
         return self.activationTable
 
     def computeDeltaTable(self, nextDeltaTable):
@@ -83,10 +84,15 @@ class ConvLayer():
     def computeWeightsTable(self, nextDeltaTable):
         padded_input = np.pad(self.inPut, ((0,0), (self.zeroPad, self.zeroPad), (self.zeroPad, self.zeroPad)), 'constant')
         for filters in range(self.nbFilters):
-            for input_depth in range(self.inShape[0]):
-                for m in range(self.layH):
-                    for n in range(self.layW):
-                        self.filterErrors[filters, input_depth] += nextDeltaTable[filters, m, n]*padded_input[input_depth, m: m+self.filterSize, n: n+self.filterSize]
+            #for input_depth in range(self.inShape[0]):
+                for m in range(self.filterSize):
+                    for n in range(self.filterSize):
+                        self.filterErrors[filters,:,:,:] += nextDeltaTable[filters, m, n]*padded_input[:, m: m+self.filterSize, n: n+self.filterSize]
+
+                        # self.filterErrors[filters, input_depth, m, n] += np.multiply(
+                        # nextDeltaTable[filters],
+                        # padded_input[input_depth, m: m+self.layW, n: n+self.layH]
+                        # ).sum()
 
 
     def computeBiasTable(self, nextDeltaTable):
@@ -96,15 +102,13 @@ class ConvLayer():
     def backPropagation(self, nextDeltaTable):
         self.computeWeightsTable(nextDeltaTable)
         self.computeBiasTable(nextDeltaTable)
-        #print(self.filterErrors[0])
         return self.computeDeltaTable(nextDeltaTable)
 
 
     def updateParams(self, nbTrainings, learningR):
-        print(self)
         for filters in range(self.nbFilters):
             self.filterTable[filters]-= learningR * ( 1/float(nbTrainings) * self.filterErrors[filters])
             self.filterErrors[filters] = 0
             self.bias[filters] -= learningR * ( 1/float(nbTrainings) * self.biasErrors[filters])
             self.biasErrors[filters] = 0
-        #print(self.filterTable[0][0])
+        # print(self.filterTable[0][0])

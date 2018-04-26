@@ -22,14 +22,13 @@ class Net():
     def propagation(self, input):
         inputLay = input
         for lay in self.layers:
-            print(lay)
             inputLay = lay.propagation(inputLay)
         return inputLay
 
     def backPropagation(self, outPut):
         outputLay = outPut
         for lay in self.layers[::-1]:
-            print(lay)
+            #print(lay)
             outputLay = lay.backPropagation(outputLay)
 
     def updateParams(self, batchSize, learningR):
@@ -37,12 +36,13 @@ class Net():
             if isinstance(layer, (ConvLayer, Perceptron)):
                 layer.updateParams(batchSize, learningR)
 
-    def train(self, inputs, labels, batchSize, learningR):
-        for i in range(int(len(inputs)/batchSize)):
-            for k in range(batchSize):
-                self.propagation(inputs[batchSize*i+k])
-                self.backPropagation(labels[batchSize*i+k])
-            self.updateParams(batchSize, learningR)
+    # def train(self, inputs, labels, batchSize, learningR):
+    #     for i in range(int(len(inputs)/batchSize)):
+    #         for k in range(batchSize):
+    #             print("lskqdjsqlkdjslk")
+    #             # self.propagation(inputs[batchSize*i+k])
+    #             # self.backPropagation(labels[batchSize*i+k])
+    #         # self.updateParams(batchSize, learningR)
 
     def test(self, inputs, labels, batchSize, learningR):
         count_test = 0

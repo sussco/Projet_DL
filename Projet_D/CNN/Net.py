@@ -8,13 +8,15 @@ class Net():
 
     def __init__(self):
 
-        conv1 = ConvLayer(28, 28, 1, 1, 5, 1, 2)
+        conv1 = ConvLayer(28, 28, 1, 6, 5, 1, 2)
         relu1 = ReLU()
         pool1 = Pool(2)
+        conv2 = ConvLayer(14, 14, 6, 16, 5, 1, 0)
+        relu2 = ReLU()
+        pool2 = Pool(2)
+        fc = Perceptron([400, 120, 84, 10])
 
-        fc = Perceptron([196, 120, 84, 10])
-
-        self.layers = [conv1, relu1, pool1, fc]
+        self.layers = [conv1, relu1, pool1, conv2, relu2, pool2, fc]
 
 
     def propagation(self, input):
@@ -23,8 +25,9 @@ class Net():
             # print(lay)
             inputLay = lay.propagation(inputLay)
             # print(inputLay.shape)
+            # print(inputLay.shape)
 
-        print (inputLay)
+        #print (inputLay)
         return inputLay
 
     def backPropagation(self, outPut):
@@ -32,6 +35,7 @@ class Net():
         for lay in self.layers[::-1]:
             outputLay = lay.backPropagation(outputLay)
             # print(lay)
+            # print(outputLay.shape)
             #print(outputLay[0])
 
 
@@ -42,6 +46,7 @@ class Net():
 
 
     def train(self, inputs, labels, batchSize, learningR):
+        count_test = 0
         for i in range(int(len(inputs)/batchSize)):
             for k in range(batchSize):
                 self.propagation(inputs[batchSize*i+k])
