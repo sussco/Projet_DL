@@ -75,6 +75,7 @@ class Perceptron:
         return self.layers[-1]
 
     def propagation(self, layIn):
+        print(layIn.shape)
         self.inShape = layIn.shape
         layIn = np.array(layIn).flatten()
         assert len(layIn) == len(self.layers[0])
@@ -82,7 +83,8 @@ class Perceptron:
         for i in range(len(self.layers) -2):
             self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
-        print(self.layers[1][20:30])
+        #print("LAYERS;\n",self.layers[0])
+        #print(self.layers[1][90:100])
         return self.layers[-1]
 
 
@@ -111,12 +113,14 @@ class Perceptron:
         self.deltaTable = []
         self.deltaTable.append(-(expectedOutput - self.layers[-1]))
         for l in range(len(self.layers) - 2, -1, -1):
+
             a = np.matmul(np.transpose(self.weights[l]),self.deltaTable[-1])*(self.layers[l] * (1 - self.layers[l]))
             self.deltaTable.append(a)
         self.deltaTable.reverse()
         for l in range(len(self.deltaTable) - 1):
             self.weightsTable[l] += np.outer(self.deltaTable[l + 1], np.transpose(self.layers[l]))
             self.biaisTable[l] += self.deltaTable[l + 1]
+        #print("DELTA:\n",self.deltaTable[1])
         return np.reshape(self.deltaTable[0], self.inShape)
 
     def backPropagationCE_RELU(self, expectedOutput):

@@ -4,6 +4,7 @@ import matplotlib.image as img
 from copy import deepcopy
 import math
 import matplotlib.pyplot as plt
+import scipy.signal
 
 def sigmoid(x):
     try:
@@ -43,11 +44,7 @@ class ConvLayer():
         self.filterErrors = np.zeros(shape = (nbFilters, entryD, filterSize, filterSize))
         self.filterTable =np.random.uniform(0, 1e-2, size = (nbFilters, entryD, filterSize, filterSize))
         self.bias = np.random.uniform(0, 1e-2, size = (nbFilters))
-        #print(self.filterTable[0][0])
-
-
-            #self.biasErrors.append( np.zeros(shape = (entryD, self.layH, self.layW)))
-
+        self.biasErrors = np.zeros(shape = (self.nbFilters))
 
 
 
@@ -55,35 +52,28 @@ class ConvLayer():
     def propagation(self, prevLayer):
         # on copie l'image a traiter, elle va etre modifiee
         #prevLayer = np.reshape(prevLayer, (self.nbFilters, ))
-        inPut = prevLayer
         self.activationTable = np.zeros( (self.nbFilters, self.layH, self.layW) )
-        # ajout de zeros autour de l'image depend de l'entier zeroPad
-        for k in range(self.zeroPad):
-            inPut = np.insert(inPut, inPut.shape[1], 0, axis = 1)
-            inPut = np.insert(inPut, inPut.shape[2], 0, axis = 2)
-            inPut = np.insert(inPut,0,0, axis = 1)
-            inPut = np.insert(inPut,0,0, axis = 2)
+        self.inPut =  prevLayer
 
-        self.inPut = inPut
+        padded_input = np.pad(prevLayer, ((0,0), (self.zeroPad, self.zeroPad), (self.zeroPad, self.zeroPad)), 'constant')
+        rotated_filter = np.rot90(self.filterTable, 2, (2,3))
+
         for filters in range(self.nbFilters):
-            for i in range(0, self.layH , self.stride):
-                for j in range(0, self.layW, self.stride):
-                    #print(inPut[:,i: i+self.filterSize, j: j+self.filterSize])
-                    self.activationTable[filters, i, j] = \
-                    np.sum(inPut[:,i: i+self.filterSize, j: j+self.filterSize] *
-                    self.filterTable[filters,:,:,:])
-                    + self.bias[filters]
+            for input_depth in range(self.inShape[0]):
+                self.activationTable[filters] += scipy.signal.convolve2d(padded_input[input_depth], rotated_filter[filters, input_depth], mode='valid')
+            self.activationTable[filters] += self.bias[filters]
         return self.activationTable
 
     def computeDeltaTable(self, nextDeltaTable):
-        nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, self.layW, self.layH))
-        self.deltaTable = np.zeros(shape = self.inShape)
-        deltaPadded = np.zeros(shape = self.inPut.shape)
+        #nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, self.layW, self.layH))
+        padded_input = np.pad(self.inPut, ((0,0), (self.zeroPad, self.zeroPad), (self.zeroPad, self.zeroPad)), 'constant')
+
+        deltaPadded = np.zeros(shape = padded_input.shape)
+
         for filters in range(self.nbFilters):
             for i in range(self.layH):
                 for j in range(self.layW):
-                    deltaPadded[:, i: i+self.filterSize,j: j+self.filterSize]+= \
-                    nextDeltaTable[filters, i, j] * self.filterTable[filters]
+                    deltaPadded[:, i: i+self.filterSize,j: j+self.filterSize]+= nextDeltaTable[filters, i, j] * self.filterTable[filters]
         if(self.zeroPad != 0):
             self.deltaTable = deltaPadded[:, self.zeroPad:-self.zeroPad, self.zeroPad:-self.zeroPad]
         else :
@@ -91,28 +81,30 @@ class ConvLayer():
         return self.deltaTable
 
     def computeWeightsTable(self, nextDeltaTable):
-            for filters in range(self.nbFilters):
-                    for m in range(self.layH):
-                        for n in range(self.layW):
-                            self.filterErrors[filters,:,:,:] += \
-                            nextDeltaTable[filters, m, n] * \
-                            self.inPut[:, m: m+self.filterSize, n: n+self.filterSize]
+        padded_input = np.pad(self.inPut, ((0,0), (self.zeroPad, self.zeroPad), (self.zeroPad, self.zeroPad)), 'constant')
+        for filters in range(self.nbFilters):
+            for input_depth in range(self.inShape[0]):
+                for m in range(self.layH):
+                    for n in range(self.layW):
+                        self.filterErrors[filters, input_depth] += nextDeltaTable[filters, m, n]*padded_input[input_depth, m: m+self.filterSize, n: n+self.filterSize]
 
 
     def computeBiasTable(self, nextDeltaTable):
-        self.biasErrors = np.zeros(shape = (self.nbFilters))
         for filters in range(self.nbFilters):
-            self.biasErrors[filters] = np.sum(nextDeltaTable[filters])
+            self.biasErrors[filters] = np.sum(nextDeltaTable[filters, :, :])
 
     def backPropagation(self, nextDeltaTable):
         self.computeWeightsTable(nextDeltaTable)
         self.computeBiasTable(nextDeltaTable)
+        #print(self.filterErrors[0])
         return self.computeDeltaTable(nextDeltaTable)
 
 
     def updateParams(self, nbTrainings, learningR):
+        print(self)
         for filters in range(self.nbFilters):
             self.filterTable[filters]-= learningR * ( 1/float(nbTrainings) * self.filterErrors[filters])
             self.filterErrors[filters] = 0
             self.bias[filters] -= learningR * ( 1/float(nbTrainings) * self.biasErrors[filters])
             self.biasErrors[filters] = 0
+        #print(self.filterTable[0][0])

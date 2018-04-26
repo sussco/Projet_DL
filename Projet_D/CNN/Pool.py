@@ -28,6 +28,7 @@ class Pool():
                     output[depth, int(i/poolSize),int(j/poolSize)] = np.max(imageCp[depth, i: i + poolSize, j : j + poolSize])
                     a = np.unravel_index(imageCp[depth, i: i + poolSize, j : j + poolSize].argmax(), imageCp[depth, i: i + poolSize, j : j + poolSize].shape)
                     self.deltaTable[depth, i+a[0]%poolSize, j + a[1]% poolSize] = 1
+        #print(output)
         return output
 
     def backPropagation(self, nextDeltaTable):
