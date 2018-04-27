@@ -8,15 +8,10 @@ class Net():
 
     def __init__(self):
 
-        conv1 = ConvLayer(28, 28, 1, 6, 5, 1, 2)
-        relu1 = ReLU()
-        pool1 = Pool(2)
-        conv2 = ConvLayer(14, 14, 6, 16, 5, 1, 0)
-        relu2 = ReLU()
-        pool2 = Pool(2)
-        fc = Perceptron([400, 120, 84, 10])
+        conv1 = ConvLayer(28, 28, 1, 1, 5, 1, 2)
+        fc = Perceptron([784, 800, 10])
 
-        self.layers = [conv1, relu1, pool1, conv2, relu2, pool2, fc]
+        self.layers = [conv1, fc]
 
 
     def propagation(self, input):
@@ -51,6 +46,9 @@ class Net():
             for k in range(batchSize):
                 self.propagation(inputs[batchSize*i+k])
                 self.backPropagation(labels[batchSize*i+k])
+            if (np.argmax(self.propagation(inputs[batchSize*i+k])) == np.argmax(labels[batchSize*i+k])):
+                count_test +=1
+            print(count_test/float(i+1))
             print(i)
             self.updateParams(batchSize, learningR)
             #print(self.layers[0].activationTable)

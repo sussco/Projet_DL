@@ -55,10 +55,10 @@ class Perceptron:
         self.deltaTable = []
 
         for i in range(len(list_of_layers)):
-            self.layers.append(np.random.uniform(0, 1e-1, size = list_of_layers[i]))
+            self.layers.append(np.random.uniform(0, 0.01, size = list_of_layers[i]))
         for j in range(len(list_of_layers)-1):
-            self.biais.append(np.random.uniform(0, 1e-1, size = list_of_layers[j+1]))
-            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*1e-1)
+            self.biais.append(np.random.uniform(0, 0.01, size = list_of_layers[j+1]))
+            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.01)
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
 
@@ -83,7 +83,7 @@ class Perceptron:
             self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
         #print("LAYERS;\n",self.layers[0])
-        # print(self.layers[0][30:100])
+        print(self.layers[-1])
         return self.layers[-1]
 
 

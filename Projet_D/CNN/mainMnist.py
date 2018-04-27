@@ -9,5 +9,5 @@ test_images = imageReader.list_labelled_images2D('t10k-images-idx3-ubyte', 't10k
 
 neuralNet = Net()
 
-neuralNet.train(labelled_images[0], labelled_images[1], 10 ,0.05)
+neuralNet.train(labelled_images[0], labelled_images[1], 1 ,0.7)
 neuralNet.test(test_images[0], test_images[1])
