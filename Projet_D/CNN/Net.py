@@ -3,15 +3,16 @@ from Perceptron import *
 from Relu import *
 from Pool import *
 from convLayer import *
+from Sigmoid import *
 
 class Net():
 
     def __init__(self):
 
-        conv1 = ConvLayer(28, 28, 1, 1, 3, 1, 0)
-        fc = Perceptron([26**2, 500, 10])
 
-        self.layers = [conv1, fc]
+        fc = Perceptron([784, 500, 10])
+
+        self.layers = [fc]
 
 
     def propagation(self, input):
@@ -22,7 +23,7 @@ class Net():
             # print(inputLay.shape)
             # print(inputLay.shape)
 
-        #print (inputLay)
+        # print (inputLay)
         return inputLay
 
     def backPropagation(self, outPut):
