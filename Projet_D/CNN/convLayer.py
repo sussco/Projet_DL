@@ -109,6 +109,7 @@ class ConvLayer():
         for filters in range(self.nbFilters):
             self.filterTable[filters]-= learningR * ( 1/float(nbTrainings) * self.filterErrors[filters])
             self.filterErrors[filters] = 0
+            #print(self.bias[filters])
             self.bias[filters] -= learningR * ( 1/float(nbTrainings) * self.biasErrors[filters])
             self.biasErrors[filters] = 0
         # print(self.filterTable[0][0])

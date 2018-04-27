@@ -8,8 +8,8 @@ class Net():
 
     def __init__(self):
 
-        conv1 = ConvLayer(28, 28, 1, 1, 5, 1, 2)
-        fc = Perceptron([784, 800, 10])
+        conv1 = ConvLayer(28, 28, 1, 1, 3, 1, 0)
+        fc = Perceptron([26**2, 500, 10])
 
         self.layers = [conv1, fc]
 
