@@ -9,10 +9,12 @@ class Net():
 
     def __init__(self):
 
+        conv1 = ConvLayer(28, 28, 1, 5, 5, 1, 2)
+        sigmoid1 = Sigmoid()
+        pool1 = Pool(2)
+        fc = Perceptron([196*5, 900, 10])
 
-        fc = Perceptron([784, 500, 10])
-
-        self.layers = [fc]
+        self.layers = [conv1, sigmoid1, pool1, fc]
 
 
     def propagation(self, input):
