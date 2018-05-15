@@ -53,15 +53,19 @@ class Perceptron:
         self.biais = []
         self.weights = []
         self.deltaTable = []
+        self.vWeights = []
+        self.vBias =[]
+
 
         for i in range(len(list_of_layers)):
-            self.layers.append(np.random.uniform(0, 0.01, size = list_of_layers[i]))
+            self.layers.append(np.random.normal(0, 0.1, size = list_of_layers[i]))
         for j in range(len(list_of_layers)-1):
-            self.biais.append(np.random.uniform(0, 0.01, size = list_of_layers[j+1]))
-            self.weights.append(np.random.random((list_of_layers[j+1], list_of_layers[j]) )*0.01)
+            self.biais.append(np.random.normal(0, 0.1, size = list_of_layers[j+1]))
+            self.weights.append(np.random.normal(0, 0.1, size = (list_of_layers[j+1], list_of_layers[j]) ))
             self.weightsTable.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
             self.biaisTable.append(np.zeros([list_of_layers[j + 1]]))
-
+            self.vWeights.append(np.zeros([list_of_layers[j+1], list_of_layers[j]]))
+            self.vBias.append(np.zeros([list_of_layers[j + 1]]))
 
 
 
@@ -77,6 +81,7 @@ class Perceptron:
     def propagation(self, layIn):
         self.inShape = layIn.shape
         layIn = np.array(layIn).flatten()
+        # print(layIn[100:130])
         assert len(layIn) == len(self.layers[0])
         self.layers[0] = np.array(layIn)
         for i in range(len(self.layers) -2):
@@ -136,11 +141,20 @@ class Perceptron:
     def updateParams(self, nbTrainings, learningR):
         for l in range(len(self.layers) - 1):
             self.weights[l] -= learningR * ( 1/float(nbTrainings) * self.weightsTable[l])
-            # print(self.weightsTable[l])
-            # print(self.weightsTable[l].shape)
             self.weightsTable[l] = 0
             self.biais[l] -= learningR * ( 1/float(nbTrainings) * self.biaisTable[l])
             self.biaisTable[l] = 0
+
+
+    def updateParamsMomentum(self, nbTrainings, learningR, momentum):
+        for l in range(len(self.layers) - 1):
+            self.vWeights[l] = momentum*self.vWeights[l] + learningR*(1/float(nbTrainings))*self.weightsTable[l]
+            self.weights[l] = self.weights[l]-self.vWeights[l]
+            self.vBias[l] =  momentum*self.vBias[l] + learningR*(1/float(nbTrainings))*self.biaisTable[l]
+            self.biais[l] -= self.vBias[l]
+            self.weightsTable[l] = 0
+            self.biaisTable[l] = 0
+
 
     def quadratic_error(self, expected):
         error = 0

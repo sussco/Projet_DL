@@ -8,13 +8,15 @@ from Sigmoid import *
 class Net():
 
     def __init__(self):
-
-        conv1 = ConvLayer(28, 28, 1, 5, 5, 1, 2)
+        conv1 = ConvLayer(32, 32, 3, 6, 5, 1, 0)
         sigmoid1 = Sigmoid()
         pool1 = Pool(2)
-        fc = Perceptron([196*5, 900, 10])
+        conv2 = ConvLayer(14, 14, 6, 16, 5, 1, 0)
+        sigmoid2 = Sigmoid()
+        pool2 = Pool(2)
+        fc = Perceptron([400, 120, 80, 10])
 
-        self.layers = [conv1, sigmoid1, pool1, fc]
+        self.layers = [conv1, sigmoid1, pool1, conv2, sigmoid2, pool2, fc]
 
 
     def propagation(self, input):
@@ -51,17 +53,21 @@ class Net():
                 self.backPropagation(labels[batchSize*i+k])
             if (np.argmax(self.propagation(inputs[batchSize*i+k])) == np.argmax(labels[batchSize*i+k])):
                 count_test +=1
-            print(count_test/float(i+1))
-            print(i)
+            # print(count_test/float(i+1))
+            # print(i)
             self.updateParams(batchSize, learningR)
             #print(self.layers[0].activationTable)
             # print(self.layers[0].filterTable[0][])
 
     def test(self, inputs, labels):
         count_test = 0
+        resPerClass = np.zeros(10)
         for i in range(len(inputs)):
                 if (np.argmax(self.propagation(inputs[i])) == np.argmax(labels[i])):
+                    resPerClass[np.argmax(labels[i])] += 1
                     count_test +=1
-                print(count_test/float(i+1))
+                # print(count_test/float(i+1))
+        print(resPerClass/1000.0)
+        return count_test/float(i+1)
         #print(self.layers[0].filterTable)
         # print(self.layers[3].filterTable)

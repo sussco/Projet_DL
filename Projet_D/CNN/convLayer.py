@@ -42,10 +42,12 @@ class ConvLayer():
 
 
         self.filterErrors = np.zeros(shape = (nbFilters, entryD, filterSize, filterSize))
-        self.filterTable =np.random.uniform(0, 0.01, size = (nbFilters, entryD, filterSize, filterSize))
-        self.bias = np.random.uniform(0, 0.01, size = (nbFilters))
+        self.filterTable =np.random.normal(0, 0.1, size = (nbFilters, entryD, filterSize, filterSize))
+        self.bias = np.random.normal(0, 0.1, size = (nbFilters))
         self.biasErrors = np.zeros(shape = (self.nbFilters))
 
+        self.vFilter = np.zeros(shape = (nbFilters, entryD, filterSize, filterSize))
+        self.vBias = np.zeros(shape = (self.nbFilters))
 
 
 
@@ -62,18 +64,20 @@ class ConvLayer():
             for input_depth in range(self.inShape[0]):
                 self.activationTable[filters] += scipy.signal.convolve2d(padded_input[input_depth], rotated_filter[filters, input_depth], mode='valid')
             self.activationTable[filters] += self.bias[filters]
-        # print(self.filterTable)
+        # print(self.activationTable.shape)
+        # print("HA\n", self.activationTable[0][6])
         return self.activationTable
 
     def computeDeltaTable(self, nextDeltaTable):
-        #nextDeltaTable = np.reshape(nextDeltaTable, (self.nbFilters, self.layW, self.layH))
+        # on pad l'entrée à nouveau si elle l'a été lors de la propagation
         padded_input = np.pad(self.inPut, ((0,0), (self.zeroPad, self.zeroPad), (self.zeroPad, self.zeroPad)), 'constant')
-
+        self.deltaTable = 0
+        # la table des deltas avec le Zeropadding
         deltaPadded = np.zeros(shape = padded_input.shape)
-
-        for filters in range(self.nbFilters):
+        for filters in range(self.nbFilters): # iteration sur les filtres
             for i in range(self.layH):
                 for j in range(self.layW):
+                    # calcul du deltaTable
                     deltaPadded[:, i: i+self.filterSize,j: j+self.filterSize]+= nextDeltaTable[filters, i, j] * self.filterTable[filters]
         if(self.zeroPad != 0):
             self.deltaTable = deltaPadded[:, self.zeroPad:-self.zeroPad, self.zeroPad:-self.zeroPad]
@@ -84,15 +88,15 @@ class ConvLayer():
     def computeWeightsTable(self, nextDeltaTable):
         padded_input = np.pad(self.inPut, ((0,0), (self.zeroPad, self.zeroPad), (self.zeroPad, self.zeroPad)), 'constant')
         for filters in range(self.nbFilters):
-            for input_depth in range(self.inShape[0]):
-                for m in range(self.filterSize):
-                    for n in range(self.filterSize):
-                        # self.filterErrors[filters,:,:,:] += nextDeltaTable[filters, m, n]*padded_input[:, m: m+self.filterSize, n: n+self.filterSize]
+            # for input_depth in range(self.inShape[0]):
+                for m in range(self.layW):
+                    for n in range(self.layH):
+                        self.filterErrors[filters,:,:,:] += nextDeltaTable[filters, m, n]*padded_input[:, m: m+self.filterSize, n: n+self.filterSize]
 
-                        self.filterErrors[filters, input_depth, m, n] += np.multiply(
-                        nextDeltaTable[filters],
-                        padded_input[input_depth, m: m+self.layW, n: n+self.layH]
-                        ).sum()
+                        # self.filterErrors[filters, input_depth, m, n] += np.multiply(
+                        # nextDeltaTable[filters],
+                        # padded_input[input_depth, m: m+self.layW, n: n+self.layH]
+                        # ).sum()
 
 
     def computeBiasTable(self, nextDeltaTable):
@@ -109,7 +113,19 @@ class ConvLayer():
         for filters in range(self.nbFilters):
             self.filterTable[filters]-= learningR * ( 1/float(nbTrainings) * self.filterErrors[filters])
             self.filterErrors[filters] = 0
-            #print(self.bias[filters])
             self.bias[filters] -= learningR * ( 1/float(nbTrainings) * self.biasErrors[filters])
+            self.biasErrors[filters] = 0
+        # print(self.filterTable[0][0])
+
+
+    def updateParamsMomentum(self, nbTrainings, learningR, momentum):
+        for filters in range(self.nbFilters):
+            self.vFilter[filters] = momentum*self.vFilter[filters]+ learningR* ( 1/float(nbTrainings)) *self.filterErrors[filters]
+            self.vBias[filters] = momentum*self.vBias[filters]+ learningR* ( 1/float(nbTrainings)) *self.biasErrors[filters]
+
+            self.filterTable[filters]-= self.vFilter[filters]
+            self.bias[filters] -= self.vBias[filters]
+
+            self.filterErrors[filters] = 0
             self.biasErrors[filters] = 0
         # print(self.filterTable[0][0])
