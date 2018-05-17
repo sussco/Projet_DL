@@ -3,10 +3,10 @@ import imageReader
 import random
 import pickle
 
-# labelled_images = imageReader.list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 60000, 0, 'digits')
-# test_images = imageReader.list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 10000, 0, 'digits')
+labelled_images = imageReader.list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 60000, 0, 'digits')
+test_images = imageReader.list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 10000, 0, 'digits')
 
-fRes1= open("CIFARLeNet2","ab")
+fRes1= open("CIFAR10test2","ab")
 
 
 def unpickle(file):
@@ -40,7 +40,8 @@ batch.append(get_data('cifar-10-batches-py/data_batch_5'))
 tests = get_data('cifar-10-batches-py/test_batch')
 nets = []
 lr = 0.1
-neuralNet = Net()
+pick = pickle.load(open('netsLeNetCifar1', 'rb'))
+neuralNet = pick[2][1]
 
 for k in range(3):
     for l in range(len(batch)):
