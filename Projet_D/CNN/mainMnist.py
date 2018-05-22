@@ -2,7 +2,7 @@ from Net import *
 from imageReader import *
 import random
 import pickle
-from augmentation import generateImageCifar
+# from augmentation import generateImageCifar
 
 #################### MNIST DATASET ######################
 labelled_images = list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 60000, 0, 'digits')
@@ -20,7 +20,7 @@ test_images = list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1
 # batch.append(get_data('cifar-10-batches-py/data_batch_5'))
 # tests = get_data('cifar-10-batches-py/test_batch')
 
-fRes1= open("Tests/MNIST/Mnist_CNN_batch100","ab")
+# fRes1= open("Tests/MNIST/Mnist_CNN_batch100","ab")
 
 
 nets = []
