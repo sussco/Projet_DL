@@ -128,3 +128,27 @@ def print_multiple_images(nb, sizeim, offset, input_file):
 print_multiple_images(10, 10, 50, 'emnist-letters-train-images-idx3-ubyte')"""
 
 #a = print_grey('train-images-idx3-ubyte',16)
+
+
+
+
+
+def unpickle(file):
+    import pickle
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo, encoding='bytes')
+    return dict
+
+def get_data(file):
+    labelled_images = unpickle(file)
+    print('getting data from file', file, '... ', end = '')
+    X = np.asarray(labelled_images[b'data']).astype("uint8")
+    X = np.reshape(X, (10000,3,32,32))
+    # X = X.transpose([0, 2, 3, 1])
+    X = X/float(255)
+    Yraw = np.asarray(labelled_images[b'labels'])
+    Y = np.zeros((10000,10))
+    for i in range(10000):
+        Y[i,Yraw[i]] = 1
+    print('done')
+    return X,Y

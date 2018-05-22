@@ -68,7 +68,7 @@ class Perceptron:
             self.vBias.append(np.zeros([list_of_layers[j + 1]]))
 
 
-
+    # sans couche softmax
     def propagation_Normal(self, layIn):
         self.inShape = layIn.shape
         layIn = np.array(layIn).flatten()
@@ -81,27 +81,15 @@ class Perceptron:
     def propagation(self, layIn):
         self.inShape = layIn.shape
         layIn = np.array(layIn).flatten()
-        # print(layIn[100:130])
         assert len(layIn) == len(self.layers[0])
         self.layers[0] = np.array(layIn)
         for i in range(len(self.layers) -2):
             self.layers[i + 1] = vector_sigmoid(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
         self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
-        #print("LAYERS;\n",self.layers[0])
-        # print(self.layers[-1])
         return self.layers[-1]
 
 
-    def propagationSoftMaxRelu(self, layIn):
-        self.inShape = layIn.shape
-        layIn = np.array(layIn).flatten()
-        assert len(layIn) == len(self.layers[0])
-        self.layers[0] = np.array(layIn)
-        for i in range(len(self.layers) -2):
-            self.layers[i + 1] = vector_reLU(np.matmul(self.weights[i],self.layers[i]) + self.biais[i])
-        self.layers[len(self.layers)-1] = softmax(np.matmul(self.weights[len(self.layers)-2],self.layers[len(self.layers)-2]) + self.biais[len(self.layers)-2])
-        return self.layers[-1]
-
+    # sans couche softmax
     def backPropagation_Normal(self, expectedOutput):
         self.deltaTable = []
         self.deltaTable.append(-(expectedOutput - self.layers[-1]) * (self.layers[-1]*(1 - self.layers[-1])))
@@ -117,25 +105,14 @@ class Perceptron:
         self.deltaTable = []
         self.deltaTable.append(-(expectedOutput - self.layers[-1]))
         for l in range(len(self.layers) - 2, -1, -1):
-            a = np.matmul(np.transpose(self.weights[l]),self.deltaTable[-1])*(self.layers[l] * (1 - self.layers[l]))
-            self.deltaTable.append(a)
+            delta_l = np.matmul(np.transpose(self.weights[l]),self.deltaTable[-1])*(self.layers[l] * (1 - self.layers[l]))
+            self.deltaTable.append(delta_l)
         self.deltaTable.reverse()
         for l in range(len(self.deltaTable) - 1):
             self.weightsTable[l] += np.outer(self.deltaTable[l + 1], np.transpose(self.layers[l]))
             self.biaisTable[l] += self.deltaTable[l + 1]
-        # print("DELTA:\n",self.deltaTable[1])
         return np.reshape(self.deltaTable[0], self.inShape)
 
-    def backPropagationCE_RELU(self, expectedOutput):
-        self.deltaTable = []
-        self.deltaTable.append(-(expectedOutput - self.layers[-1]))
-        for l in range(len(self.layers) - 2, -1, -1):
-            a = np.matmul(np.transpose(self.weights[l]),self.deltaTable[-1])*backProp_ReLU(self.layers[l])
-            self.deltaTable.append(a)
-        self.deltaTable.reverse()
-        for l in range(len(self.deltaTable) - 1):
-            self.weightsTable[l] += np.outer(self.deltaTable[l + 1], np.transpose(self.layers[l]))
-            self.biaisTable[l] += self.deltaTable[l + 1]
 
 
     def updateParams(self, nbTrainings, learningR):
@@ -145,15 +122,6 @@ class Perceptron:
             self.biais[l] -= learningR * ( 1/float(nbTrainings) * self.biaisTable[l])
             self.biaisTable[l] = 0
 
-
-    def updateParamsMomentum(self, nbTrainings, learningR, momentum):
-        for l in range(len(self.layers) - 1):
-            self.vWeights[l] = momentum*self.vWeights[l] + learningR*(1/float(nbTrainings))*self.weightsTable[l]
-            self.weights[l] = self.weights[l]-self.vWeights[l]
-            self.vBias[l] =  momentum*self.vBias[l] + learningR*(1/float(nbTrainings))*self.biaisTable[l]
-            self.biais[l] -= self.vBias[l]
-            self.weightsTable[l] = 0
-            self.biaisTable[l] = 0
 
 
     def quadratic_error(self, expected):

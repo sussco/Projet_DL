@@ -2,19 +2,19 @@ import numpy
 from Perceptron import *
 from Relu import *
 from Pool import *
-from convLayer import *
+from ConvLayer import *
 from Sigmoid import *
 
 class Net():
 
     def __init__(self):
-        conv1 = ConvLayer(32, 32, 3, 6, 5, 1, 0)
+        conv1 = ConvLayer(28, 28, 1, 6, 5, 1, 2)
         sigmoid1 = Sigmoid()
         pool1 = Pool(2)
         conv2 = ConvLayer(14, 14, 6, 16, 5, 1, 0)
         sigmoid2 = Sigmoid()
         pool2 = Pool(2)
-        fc = Perceptron([400, 120, 80, 10])
+        fc = Perceptron([400, 600, 10])
 
         self.layers = [conv1, sigmoid1, pool1, conv2, sigmoid2, pool2, fc]
 
@@ -53,11 +53,11 @@ class Net():
                 self.backPropagation(labels[batchSize*i+k])
             if (np.argmax(self.propagation(inputs[batchSize*i+k])) == np.argmax(labels[batchSize*i+k])):
                 count_test +=1
-            # print(count_test/float(i+1))
-            # print(i)
             self.updateParams(batchSize, learningR)
             #print(self.layers[0].activationTable)
             # print(self.layers[0].filterTable[0][])
+        print(count_test/float(i+1))
+
 
     def test(self, inputs, labels):
         count_test = 0
@@ -68,6 +68,7 @@ class Net():
                     count_test +=1
                 # print(count_test/float(i+1))
         print(resPerClass/1000.0)
+        print(count_test/float(i+1))
         return count_test/float(i+1)
         #print(self.layers[0].filterTable)
         # print(self.layers[3].filterTable)
