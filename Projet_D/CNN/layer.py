@@ -1,4 +1,5 @@
 import numpy as np
+from Projet_Deep_Learning/Projet_D/CNN/convlayer.py import *
 
 class Layer:
 
@@ -33,4 +34,5 @@ class Layer:
     def sigmoid(self):
         print("sigmoid Undefined")
 
-    def get
+    def getDeltas(self):
+        pass

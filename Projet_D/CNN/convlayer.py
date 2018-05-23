@@ -4,6 +4,7 @@ import matplotlib.image as img
 from copy import deepcopy
 import math
 import matplotlib.pyplot as plt
+from Projet_D.CNN import *
 
 def sigmoid(x):
     try:
