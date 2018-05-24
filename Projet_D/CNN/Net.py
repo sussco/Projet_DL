@@ -14,7 +14,7 @@ class Net():
         conv2 = ConvLayer(14, 14, 6, 16, 5, 1, 0)
         sigmoid2 = Sigmoid()
         pool2 = Pool(2)
-        fc = Perceptron([400, 600, 10])
+        fc = Perceptron([400, 700, 26])
 
         self.layers = [conv1, sigmoid1, pool1, conv2, sigmoid2, pool2, fc]
 
@@ -53,6 +53,8 @@ class Net():
                 self.backPropagation(labels[batchSize*i+k])
             if (np.argmax(self.propagation(inputs[batchSize*i+k])) == np.argmax(labels[batchSize*i+k])):
                 count_test +=1
+            if(i%100 == 0):
+                print(count_test/float(i+1))
             self.updateParams(batchSize, learningR)
             #print(self.layers[0].activationTable)
             # print(self.layers[0].filterTable[0][])
@@ -61,7 +63,7 @@ class Net():
 
     def test(self, inputs, labels):
         count_test = 0
-        resPerClass = np.zeros(10)
+        resPerClass = np.zeros(26)
         for i in range(len(inputs)):
                 if (np.argmax(self.propagation(inputs[i])) == np.argmax(labels[i])):
                     resPerClass[np.argmax(labels[i])] += 1

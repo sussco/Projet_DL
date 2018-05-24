@@ -5,11 +5,12 @@ import pickle
 # from augmentation import generateImageCifar
 
 #################### MNIST DATASET ######################
-labelled_images = list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 60000, 0, 'digits')
-test_images = list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 10000, 0, 'digits')
+#labelled_images = list_labelled_images2D('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 120000, 0, 'digits')
+#test_images = list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte', 10000, 0, 'digits')
 
-
-
+################### EMNIST DATASET ######################
+labelled_images = list_labelled_images2D('emnist-letters-train-images-idx3-ubyte', 'emnist-letters-train-labels-idx1-ubyte', 120000, 0, 'letters')
+test_images = list_labelled_images2D('emnist-letters-test-images-idx3-ubyte', 'emnist-letters-test-labels-idx1-ubyte', 10000, 0, 'letters')
 
 ################### CIFAR10 DATASET #####################
 # batch = []
@@ -24,13 +25,13 @@ test_images = list_labelled_images2D('t10k-images-idx3-ubyte', 't10k-labels-idx1
 
 
 nets = []
-lr = 0.1
+lr = 0.05
 # pick = pickle.load(open('CIFAR10_1batch4', 'rb'))
 
-for k in range(9):
+for k in range(1):
         neuralNet = Net()
         # for l in range(len(batch)):
-        neuralNet.train(labelled_images[0], labelled_images[1], 100, lr)
+        neuralNet.train(labelled_images[0], labelled_images[1], 1, lr)
         # print(10000, l)
         print(k)
         nets.append( (neuralNet.test(test_images[0], test_images[1]), neuralNet, lr))
