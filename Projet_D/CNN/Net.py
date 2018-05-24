@@ -2,7 +2,7 @@ import numpy
 from Perceptron import *
 from Relu import *
 from Pool import *
-from ConvLayer import *
+from convLayer import *
 from Sigmoid import *
 
 class Net():
