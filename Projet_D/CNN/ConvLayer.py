@@ -6,6 +6,7 @@ import math
 import matplotlib.pyplot as plt
 import scipy.signal
 
+
 def sigmoid(x):
     try:
         ans = 1 / (1 + math.exp(-x))
