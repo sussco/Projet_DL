@@ -14,7 +14,7 @@ class Net():
         conv2 = ConvLayer(14, 14, 6, 16, 5, 1, 0)
         sigmoid2 = Sigmoid()
         pool2 = Pool(2)
-        fc = Perceptron([400, 700, 26])
+        fc = Perceptron([400, 600, 10])
 
         self.layers = [conv1, sigmoid1, pool1, conv2, sigmoid2, pool2, fc]
 
@@ -24,7 +24,6 @@ class Net():
         for lay in self.layers:
             # print(lay)
             inputLay = lay.propagation(inputLay)
-            # print(inputLay.shape)
             # print(inputLay.shape)
 
         # print (inputLay)
@@ -53,7 +52,7 @@ class Net():
                 self.backPropagation(labels[batchSize*i+k])
             if (np.argmax(self.propagation(inputs[batchSize*i+k])) == np.argmax(labels[batchSize*i+k])):
                 count_test +=1
-            if(i%100 == 0):
+            if(i%10 == 0):
                 print(count_test/float(i+1))
             self.updateParams(batchSize, learningR)
             #print(self.layers[0].activationTable)
