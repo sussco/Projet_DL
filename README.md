@@ -9,6 +9,6 @@ In /projet_DL/Projet_D/CNN you can find different classes that represent differe
 - Pool: a Pooling layer
 - Relu
 - Sigmoid
-- Net: the whole natwork, in which you define the architecture
+- Net: the whole network, in which you define the architecture
 
 To train or test a neural network, use mainMnist.py
